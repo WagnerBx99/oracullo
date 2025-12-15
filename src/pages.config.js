@@ -3,6 +3,8 @@ import Integracoes from './pages/Integracoes';
 import Configuracoes from './pages/Configuracoes';
 import Relatorios from './pages/Relatorios';
 import Formularios from './pages/Formularios';
+import Manipulaveis from './pages/Manipulaveis';
+import BancoDados from './pages/BancoDados';
 import __Layout from './Layout.jsx';
 
 
@@ -12,6 +14,8 @@ export const PAGES = {
     "Configuracoes": Configuracoes,
     "Relatorios": Relatorios,
     "Formularios": Formularios,
+    "Manipulaveis": Manipulaveis,
+    "BancoDados": BancoDados,
 }
 
 export const pagesConfig = {
