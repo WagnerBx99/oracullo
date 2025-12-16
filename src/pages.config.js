@@ -11,6 +11,7 @@ import Diretoria from './pages/Diretoria';
 import Comercial from './pages/Comercial';
 import Operacional from './pages/Operacional';
 import ManualUsuario from './pages/ManualUsuario';
+import ManualStandalone from './pages/ManualStandalone';
 import __Layout from './Layout.jsx';
 
 
@@ -28,6 +29,7 @@ export const PAGES = {
     "Comercial": Comercial,
     "Operacional": Operacional,
     "ManualUsuario": ManualUsuario,
+    "ManualStandalone": ManualStandalone,
 }
 
 export const pagesConfig = {

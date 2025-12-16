@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { createPageUrl } from './utils';
 import { 
   FileText, Download, ChevronRight, Home, LayoutDashboard, 
   Database, ShoppingCart, Settings, DollarSign, BarChart3,
   TrendingUp, Package, Target, Users, Award, Briefcase,
   Layers, FileDown, Filter, RefreshCw, Edit3, Plus, Upload,
-  Eye, Zap, PieChart, Activity
+  Eye, Zap, PieChart, Activity, ExternalLink
 } from 'lucide-react';
 
 export default function ManualUsuario() {
@@ -47,10 +48,20 @@ export default function ManualUsuario() {
               <p className="text-sm text-muted-foreground">ORACULLO - Sistema de Gestão PEC Motors</p>
             </div>
           </div>
-          <Button onClick={handleDownloadPDF} className="gap-2 bg-gradient-to-r from-[#135670] to-[#ff5c00]">
-            <Download className="w-4 h-4" />
-            Baixar PDF
-          </Button>
+          <div className="flex gap-3">
+            <Button 
+              onClick={() => window.open(createPageUrl('ManualStandalone'), '_blank')} 
+              variant="outline"
+              className="gap-2"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Abrir Versão Externa
+            </Button>
+            <Button onClick={handleDownloadPDF} className="gap-2 bg-gradient-to-r from-[#135670] to-[#ff5c00]">
+              <Download className="w-4 h-4" />
+              Imprimir / Salvar PDF
+            </Button>
+          </div>
         </div>
       </motion.div>
 
