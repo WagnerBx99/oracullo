@@ -10,6 +10,7 @@ import LogAtividades from './pages/LogAtividades';
 import Diretoria from './pages/Diretoria';
 import Comercial from './pages/Comercial';
 import Operacional from './pages/Operacional';
+import ManualUsuario from './pages/ManualUsuario';
 import __Layout from './Layout.jsx';
 
 
@@ -26,6 +27,7 @@ export const PAGES = {
     "Diretoria": Diretoria,
     "Comercial": Comercial,
     "Operacional": Operacional,
+    "ManualUsuario": ManualUsuario,
 }
 
 export const pagesConfig = {
