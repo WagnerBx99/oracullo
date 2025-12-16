@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { createPageUrl } from './utils';
+import { createPageUrl } from '../utils';
 import { 
   FileText, Download, ChevronRight, Home, LayoutDashboard, 
   Database, ShoppingCart, Settings, DollarSign, BarChart3,
