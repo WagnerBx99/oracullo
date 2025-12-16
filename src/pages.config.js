@@ -7,6 +7,7 @@ import Manipulaveis from './pages/Manipulaveis';
 import BancoDados from './pages/BancoDados';
 import GestaoPrecos from './pages/GestaoPrecos';
 import LogAtividades from './pages/LogAtividades';
+import app from './pages/_app';
 import __Layout from './Layout.jsx';
 
 
@@ -20,6 +21,7 @@ export const PAGES = {
     "BancoDados": BancoDados,
     "GestaoPrecos": GestaoPrecos,
     "LogAtividades": LogAtividades,
+    "_app": app,
 }
 
 export const pagesConfig = {

@@ -29,9 +29,9 @@ export default function KPICard({ kpi, index }) {
 
   const corCategoria = {
     financeiro: 'from-emerald-500 to-emerald-600',
-    comercial: 'from-blue-500 to-blue-600',
+    comercial: 'from-[#135670] to-[#1a7a9e]',
     operacional: 'from-purple-500 to-purple-600',
-    estoque: 'from-orange-500 to-orange-600',
+    estoque: 'from-[#ff5c00] to-orange-600',
     margem: 'from-pink-500 to-pink-600'
   };
 
@@ -43,9 +43,11 @@ export default function KPICard({ kpi, index }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
+      whileHover={{ y: -5, transition: { duration: 0.2 } }}
     >
-      <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 relative overflow-hidden">
-        <div className={`absolute top-0 left-0 w-1 h-full bg-gradient-to-b ${corCategoria[kpi.categoria]}`} />
+      <Card className="border-0 shadow-lg hover:shadow-2xl transition-all duration-300 relative overflow-hidden bg-card group">
+        <div className={`absolute top-0 left-0 w-1 h-full bg-gradient-to-b ${corCategoria[kpi.categoria]} group-hover:w-2 transition-all`} />
+        <div className={`absolute -right-10 -top-10 w-32 h-32 rounded-full bg-gradient-to-br ${corCategoria[kpi.categoria]} opacity-5 group-hover:opacity-10 transition-opacity`} />
         <CardContent className="p-6 pl-8">
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">

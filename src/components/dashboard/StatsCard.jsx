@@ -4,10 +4,10 @@ import { motion } from "framer-motion";
 
 export default function StatsCard({ title, value, subtitle, icon: Icon, color = "blue", trend }) {
   const colorClasses = {
-    blue: "from-blue-500 to-blue-600",
+    blue: "from-[#135670] to-[#1a7a9e]",
     green: "from-emerald-500 to-emerald-600",
     purple: "from-violet-500 to-violet-600",
-    orange: "from-orange-500 to-orange-600",
+    orange: "from-[#ff5c00] to-orange-600",
     red: "from-red-500 to-red-600"
   };
 
@@ -16,8 +16,9 @@ export default function StatsCard({ title, value, subtitle, icon: Icon, color = 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
+      whileHover={{ y: -5, transition: { duration: 0.2 } }}
     >
-      <Card className="overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+      <Card className="overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 bg-card group">
         <CardContent className="p-0">
           <div className="flex items-stretch">
             <div className={`w-2 bg-gradient-to-b ${colorClasses[color]}`} />

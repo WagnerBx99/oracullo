@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Package, DollarSign, TrendingUp, BarChart3, Plus, Upload, RefreshCw, Database, Target } from 'lucide-react';
+import { Package, DollarSign, TrendingUp, BarChart3, Plus, Upload, RefreshCw, Database, Target, Edit3 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
 import StatsCard from '@/components/dashboard/StatsCard';
 import KPICard from '@/components/dashboard/KPICard';
 import ConsolidacaoSistemas from '@/components/dashboard/ConsolidacaoSistemas';
+import DatabaseArchitecture from '@/components/dashboard/DatabaseArchitecture';
+import EditableDashboard from '@/components/dashboard/EditableDashboard';
 import MargemChart from '@/components/dashboard/MargemChart';
 
 export default function Dashboard() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("consolidado");
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [dashboardWidgets, setDashboardWidgets] = useState([]);
 
   const { data: produtos = [], isLoading } = useQuery({
     queryKey: ['produtos'],
@@ -65,13 +69,17 @@ export default function Dashboard() {
         className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
       >
         <div>
-          <h1 className="text-3xl font-bold text-slate-800">Dashboard Consolidado</h1>
-          <p className="text-slate-500 mt-1">Visão integrada de todos os sistemas - OMIE, WK, Mercos e Clic</p>
+          <h1 className="text-3xl font-bold gradient-text">Dashboard Consolidado</h1>
+          <p className="text-muted-foreground mt-1">Visão integrada de todos os sistemas - OMIE, WK, Mercos e Clic</p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" className="gap-2">
             <RefreshCw className="w-4 h-4" />
             Sincronizar Dados
+          </Button>
+          <Button className="gap-2 bg-gradient-to-r from-[#135670] to-[#ff5c00] text-white">
+            <Edit3 className="w-4 h-4" />
+            Personalizar
           </Button>
         </div>
       </motion.div>
@@ -106,18 +114,31 @@ export default function Dashboard() {
         />
       </div>
 
+      {/* Arquitetura de Bancos de Dados */}
+      <DatabaseArchitecture />
+
       {/* Consolidação de Sistemas */}
       <ConsolidacaoSistemas 
         integracoes={integracoes}
         onSincronizar={() => queryClient.invalidateQueries()}
       />
 
+      {/* Dashboard Editável */}
+      <div>
+        <EditableDashboard
+          widgets={dashboardWidgets}
+          onSave={setDashboardWidgets}
+          isEditMode={isEditMode}
+          onToggleEditMode={() => setIsEditMode(!isEditMode)}
+        />
+      </div>
+
       {/* KPIs Principais */}
-      {kpis.length > 0 && (
+      {kpis.length > 0 && !isEditMode && (
         <div>
           <div className="flex items-center gap-3 mb-6">
-            <Target className="w-6 h-6 text-blue-600" />
-            <h2 className="text-2xl font-bold text-slate-800">Indicadores Principais</h2>
+            <Target className="w-6 h-6 text-primary" />
+            <h2 className="text-2xl font-bold text-foreground">Indicadores Principais</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {kpis.slice(0, 6).map((kpi, index) => (
