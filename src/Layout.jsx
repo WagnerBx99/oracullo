@@ -93,6 +93,11 @@ export default function Layout({ children, currentPageName }) {
         { label: 'Usuários', page: 'Configuracoes' },
         { label: 'Log de Atividades', page: 'LogAtividades' }
       ]
+    },
+    { 
+      label: 'Manual do Usuário', 
+      icon: FileText, 
+      page: 'ManualUsuario'
     }
   ];
 
