@@ -25,24 +25,18 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 const sistemasConfig = {
-  crm: {
-    label: 'CRM',
-    sistemas: [
-      { id: 'mercos', nome: 'Mercos', cor: 'blue' },
-      { id: 'clic', nome: 'Clic', cor: 'purple' }
-    ]
-  },
   erp: {
     label: 'ERP',
     sistemas: [
-      { id: 'omie', nome: 'Omie', cor: 'green' },
-      { id: 'wk', nome: 'WK', cor: 'orange' }
+      { id: 'omie', nome: 'OMIE', cor: 'emerald', descricao: 'Sistema ERP integrado' },
+      { id: 'wk', nome: 'WK Radar', cor: 'blue', descricao: 'Sistema ERP integrado' }
     ]
   },
-  op: {
-    label: 'OP',
+  crm: {
+    label: 'CRM',
     sistemas: [
-      { id: 'sults', nome: 'Sults', cor: 'red' }
+      { id: 'mercos', nome: 'Mercos', cor: 'purple', descricao: 'CRM comercial' },
+      { id: 'clic', nome: 'Clic', cor: 'pink', descricao: 'CRM comercial' }
     ]
   }
 };
@@ -111,7 +105,7 @@ export default function Integracoes() {
       >
         <div>
           <h1 className="text-3xl font-bold text-slate-800">Integrações API</h1>
-          <p className="text-slate-500 mt-1">Configure conexões com CRMs, ERPs e outros sistemas</p>
+          <p className="text-slate-500 mt-1">Conexões com OMIE, WK Radar, Mercos e Clic - Sincronização automática e periódica</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -208,12 +202,10 @@ export default function Integracoes() {
           <TabsTrigger value="erp" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
             ERP's
           </TabsTrigger>
-          <TabsTrigger value="op" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white">
-            OP
-          </TabsTrigger>
+
         </TabsList>
 
-        {['todos', 'crm', 'erp', 'op'].map((tab) => (
+        {['todos', 'erp', 'crm'].map((tab) => (
           <TabsContent key={tab} value={tab} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {integracoes

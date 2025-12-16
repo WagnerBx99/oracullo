@@ -5,6 +5,8 @@ import Relatorios from './pages/Relatorios';
 import Formularios from './pages/Formularios';
 import Manipulaveis from './pages/Manipulaveis';
 import BancoDados from './pages/BancoDados';
+import GestaoPrecos from './pages/GestaoPrecos';
+import LogAtividades from './pages/LogAtividades';
 import __Layout from './Layout.jsx';
 
 
@@ -16,6 +18,8 @@ export const PAGES = {
     "Formularios": Formularios,
     "Manipulaveis": Manipulaveis,
     "BancoDados": BancoDados,
+    "GestaoPrecos": GestaoPrecos,
+    "LogAtividades": LogAtividades,
 }
 
 export const pagesConfig = {

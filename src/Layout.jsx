@@ -35,28 +35,48 @@ export default function Layout({ children, currentPageName }) {
 
   const menuItems = [
     { 
-      label: 'Dashboard', 
+      label: 'Visão Geral', 
       icon: LayoutDashboard, 
       page: 'Dashboard',
       submenu: [
-        { label: 'Custo x Venda', page: 'Dashboard' },
-        { label: 'Manipuláveis', page: 'Manipulaveis' },
-        { label: 'Relatórios', page: 'Relatorios' }
+        { label: 'Consolidado', page: 'Dashboard' },
+        { label: 'Diretoria', page: 'Diretoria' },
+        { label: 'Comercial', page: 'Comercial' },
+        { label: 'Operacional', page: 'Operacional' }
       ]
     },
     { 
-      label: 'Banco de Dados', 
+      label: 'Gestão de Preços', 
       icon: Database, 
-      page: 'BancoDados',
+      page: 'GestaoPrecos',
       submenu: [
-        { label: 'Integrações API', page: 'Integracoes' },
-        { label: 'Formulários', page: 'Formularios' }
+        { label: 'Custo x Venda', page: 'GestaoPrecos' },
+        { label: 'Ajuste de Margem', page: 'Manipulaveis' }
       ]
     },
     { 
-      label: 'Configurações', 
+      label: 'Integrações', 
+      icon: Database, 
+      page: 'Integracoes',
+      submenu: [
+        { label: 'ERP (OMIE/WK)', page: 'Integracoes' },
+        { label: 'CRM (Mercos/Clic)', page: 'Integracoes' },
+        { label: 'Input Manual', page: 'Formularios' }
+      ]
+    },
+    { 
+      label: 'Relatórios', 
+      icon: FileText, 
+      page: 'Relatorios'
+    },
+    { 
+      label: 'Administração', 
       icon: Settings, 
-      page: 'Configuracoes'
+      page: 'Configuracoes',
+      submenu: [
+        { label: 'Usuários', page: 'Configuracoes' },
+        { label: 'Log de Atividades', page: 'LogAtividades' }
+      ]
     }
   ];
 
