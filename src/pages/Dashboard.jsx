@@ -18,16 +18,6 @@ export default function Dashboard() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [dashboardWidgets, setDashboardWidgets] = useState([]);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (!isAuth) {
-        base44.auth.redirectToLogin();
-      }
-    };
-    checkAuth();
-  }, []);
-
   const { data: produtos = [], isLoading } = useQuery({
     queryKey: ['produtos'],
     queryFn: () => base44.entities.Produto.list('-created_date', 100),

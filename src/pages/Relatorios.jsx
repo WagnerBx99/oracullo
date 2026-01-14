@@ -141,16 +141,6 @@ export default function Relatorios() {
   const [dataFim, setDataFim] = useState("2026-01-31");
   const [filialFiltro, setFilialFiltro] = useState("todas");
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (!isAuth) {
-        base44.auth.redirectToLogin();
-      }
-    };
-    checkAuth();
-  }, []);
-
   const totalGeral = dadosConsolidado.reduce((sum, estado) => sum + estado.totalEstado, 0);
   const totalTrading = dadosTrading.reduce((sum, item) => sum + item.total, 0);
   const faturamentoTotal = totalGeral + totalTrading;

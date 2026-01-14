@@ -44,16 +44,6 @@ const dadosComparativo = [
 ];
 
 export default function Diretoria() {
-  useEffect(() => {
-    const checkAuth = async () => {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (!isAuth) {
-        base44.auth.redirectToLogin();
-      }
-    };
-    checkAuth();
-  }, []);
-
   const { data: kpis = [] } = useQuery({
     queryKey: ['kpis'],
     queryFn: () => base44.entities.KPI.list('-created_date'),
