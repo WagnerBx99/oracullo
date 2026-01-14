@@ -56,8 +56,8 @@ export default function GestaoPrecos() {
         className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
       >
         <div>
-          <h1 className="text-3xl font-bold text-slate-800">Gestão de Preços</h1>
-          <p className="text-slate-500 mt-1">Análise de Custo x Venda consolidada dos sistemas integrados</p>
+          <h1 className="text-3xl font-bold gradient-text">Gestão de Preços</h1>
+          <p className="text-muted-foreground mt-1">Análise de Custo x Venda consolidada dos sistemas integrados</p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" className="gap-2" onClick={handleExportar}>

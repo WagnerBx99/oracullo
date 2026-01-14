@@ -150,7 +150,7 @@ export default function Dashboard() {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-white shadow-sm border p-1">
+        <TabsList className="bg-card shadow-sm border p-1">
           <TabsTrigger 
             value="consolidado" 
             className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
@@ -184,15 +184,15 @@ export default function Dashboard() {
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="bg-white rounded-2xl shadow-lg p-12 text-center"
+          className="bg-card rounded-2xl shadow-lg p-12 text-center border"
         >
-          <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Database className="w-10 h-10 text-blue-600" />
+          <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Database className="w-10 h-10 text-blue-600 dark:text-blue-400" />
           </div>
-          <h3 className="text-xl font-semibold text-slate-800 mb-2">
+          <h3 className="text-xl font-semibold text-foreground mb-2">
             Aguardando sincronização de dados
           </h3>
-          <p className="text-slate-500 mb-6 max-w-md mx-auto">
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
             Configure as integrações com OMIE, WK, Mercos e Clic para começar a consolidar seus dados.
           </p>
           <Button className="gap-2 bg-blue-600 hover:bg-blue-700">
