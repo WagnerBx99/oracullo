@@ -56,8 +56,8 @@ export default function BancoDados() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-3xl font-bold text-slate-800">Banco de Dados</h1>
-        <p className="text-slate-500 mt-1">Gerencie as fontes de dados do sistema</p>
+        <h1 className="text-3xl font-bold gradient-text">Banco de Dados</h1>
+        <p className="text-muted-foreground mt-1">Gerencie as fontes de dados do sistema</p>
       </motion.div>
 
       {/* Status Card */}
@@ -113,12 +113,12 @@ export default function BancoDados() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   {modulo.itens.map((item, i) => (
-                    <div key={i} className="p-3 bg-slate-50 rounded-lg">
-                      <p className="font-medium text-slate-700">{item.label}</p>
+                    <div key={i} className="p-3 bg-muted/50 rounded-lg">
+                      <p className="font-medium text-foreground">{item.label}</p>
                       {item.sub && (
                         <div className="flex flex-wrap gap-2 mt-2">
                           {item.sub.map((s, j) => (
-                            <span key={j} className="text-xs bg-white px-2 py-1 rounded-md text-slate-500 border">
+                            <span key={j} className="text-xs bg-card px-2 py-1 rounded-md text-muted-foreground border">
                               {s}
                             </span>
                           ))}
@@ -140,8 +140,8 @@ export default function BancoDados() {
       </div>
 
       {/* Diagrama Simplificado */}
-      <Card className="border-0 shadow-lg">
-        <CardHeader className="border-b bg-slate-50/50">
+      <Card className="border-0 shadow-lg bg-card">
+        <CardHeader className="border-b bg-muted/30">
           <CardTitle className="flex items-center gap-2">
             <Database className="w-5 h-5" />
             Fluxo de Dados
@@ -151,10 +151,10 @@ export default function BancoDados() {
           <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8">
             {/* Fontes */}
             <div className="flex flex-col gap-2 items-center">
-              <div className="text-sm font-medium text-slate-500 mb-2">FONTES</div>
+              <div className="text-sm font-medium text-muted-foreground mb-2">FONTES</div>
               <div className="flex flex-wrap justify-center gap-2">
                 {['Mercos', 'Clic', 'Omie', 'WK', 'Sults'].map((fonte) => (
-                  <div key={fonte} className="px-3 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium">
+                  <div key={fonte} className="px-3 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-lg text-sm font-medium">
                     {fonte}
                   </div>
                 ))}
@@ -162,7 +162,7 @@ export default function BancoDados() {
             </div>
 
             {/* Arrow */}
-            <ArrowRight className="w-8 h-8 text-slate-300 rotate-90 md:rotate-0" />
+            <ArrowRight className="w-8 h-8 text-muted-foreground rotate-90 md:rotate-0" />
 
             {/* Central */}
             <div className="w-32 h-32 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center shadow-xl">
@@ -173,14 +173,14 @@ export default function BancoDados() {
             </div>
 
             {/* Arrow */}
-            <ArrowRight className="w-8 h-8 text-slate-300 rotate-90 md:rotate-0" />
+            <ArrowRight className="w-8 h-8 text-muted-foreground rotate-90 md:rotate-0" />
 
             {/* Saídas */}
             <div className="flex flex-col gap-2 items-center">
-              <div className="text-sm font-medium text-slate-500 mb-2">SAÍDAS</div>
+              <div className="text-sm font-medium text-muted-foreground mb-2">SAÍDAS</div>
               <div className="flex flex-wrap justify-center gap-2">
                 {['Dashboard', 'Relatórios', 'Exportação'].map((saida) => (
-                  <div key={saida} className="px-3 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-sm font-medium">
+                  <div key={saida} className="px-3 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-lg text-sm font-medium">
                     {saida}
                   </div>
                 ))}

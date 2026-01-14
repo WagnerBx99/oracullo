@@ -8,9 +8,9 @@ import GestaoPrecos from './pages/GestaoPrecos';
 import Integracoes from './pages/Integracoes';
 import LogAtividades from './pages/LogAtividades';
 import Manipulaveis from './pages/Manipulaveis';
+import ManualUsuario from './pages/ManualUsuario';
 import Operacional from './pages/Operacional';
 import Relatorios from './pages/Relatorios';
-import ManualUsuario from './pages/ManualUsuario';
 import __Layout from './Layout.jsx';
 
 
@@ -25,9 +25,9 @@ export const PAGES = {
     "Integracoes": Integracoes,
     "LogAtividades": LogAtividades,
     "Manipulaveis": Manipulaveis,
+    "ManualUsuario": ManualUsuario,
     "Operacional": Operacional,
     "Relatorios": Relatorios,
-    "ManualUsuario": ManualUsuario,
 }
 
 export const pagesConfig = {
