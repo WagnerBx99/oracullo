@@ -1,32 +1,32 @@
-import Dashboard from './pages/Dashboard';
-import Integracoes from './pages/Integracoes';
-import Configuracoes from './pages/Configuracoes';
-import Relatorios from './pages/Relatorios';
-import Formularios from './pages/Formularios';
-import Manipulaveis from './pages/Manipulaveis';
 import BancoDados from './pages/BancoDados';
-import GestaoPrecos from './pages/GestaoPrecos';
-import LogAtividades from './pages/LogAtividades';
-import Diretoria from './pages/Diretoria';
 import Comercial from './pages/Comercial';
+import Configuracoes from './pages/Configuracoes';
+import Dashboard from './pages/Dashboard';
+import Diretoria from './pages/Diretoria';
+import Formularios from './pages/Formularios';
+import GestaoPrecos from './pages/GestaoPrecos';
+import Integracoes from './pages/Integracoes';
+import LogAtividades from './pages/LogAtividades';
+import Manipulaveis from './pages/Manipulaveis';
 import Operacional from './pages/Operacional';
+import Relatorios from './pages/Relatorios';
 import ManualUsuario from './pages/ManualUsuario';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Dashboard": Dashboard,
-    "Integracoes": Integracoes,
-    "Configuracoes": Configuracoes,
-    "Relatorios": Relatorios,
-    "Formularios": Formularios,
-    "Manipulaveis": Manipulaveis,
     "BancoDados": BancoDados,
-    "GestaoPrecos": GestaoPrecos,
-    "LogAtividades": LogAtividades,
-    "Diretoria": Diretoria,
     "Comercial": Comercial,
+    "Configuracoes": Configuracoes,
+    "Dashboard": Dashboard,
+    "Diretoria": Diretoria,
+    "Formularios": Formularios,
+    "GestaoPrecos": GestaoPrecos,
+    "Integracoes": Integracoes,
+    "LogAtividades": LogAtividades,
+    "Manipulaveis": Manipulaveis,
     "Operacional": Operacional,
+    "Relatorios": Relatorios,
     "ManualUsuario": ManualUsuario,
 }
 
