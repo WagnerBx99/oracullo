@@ -65,7 +65,12 @@ export default function Layout({ children, currentPageName }) {
     { 
       label: 'Diretoria', 
       icon: Layers, 
-      page: 'Diretoria'
+      page: 'Diretoria',
+      submenu: [
+        { label: 'Dashboard Diretoria', page: 'Diretoria' },
+        { label: 'Custo x Venda', page: 'GestaoPrecos' },
+        { label: 'Ajuste de Margem', page: 'Manipulaveis' }
+      ]
     },
     { 
       label: 'Comercial', 
@@ -76,15 +81,6 @@ export default function Layout({ children, currentPageName }) {
       label: 'Operacional', 
       icon: Settings, 
       page: 'Operacional'
-    },
-    { 
-      label: 'Gestão de Preços', 
-      icon: Database, 
-      page: 'GestaoPrecos',
-      submenu: [
-        { label: 'Custo x Venda', page: 'GestaoPrecos' },
-        { label: 'Ajuste de Margem', page: 'Manipulaveis' }
-      ]
     },
     { 
       label: 'Integrações', 
