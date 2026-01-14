@@ -58,15 +58,24 @@ export default function Layout({ children, currentPageName }) {
 
   const menuItems = [
     { 
-      label: 'Visão Geral', 
+      label: 'Consolidado', 
       icon: LayoutDashboard, 
-      page: 'Dashboard',
-      submenu: [
-        { label: 'Consolidado', page: 'Dashboard' },
-        { label: 'Diretoria', page: 'Diretoria' },
-        { label: 'Comercial', page: 'Comercial' },
-        { label: 'Operacional', page: 'Operacional' }
-      ]
+      page: 'Dashboard'
+    },
+    { 
+      label: 'Diretoria', 
+      icon: Layers, 
+      page: 'Diretoria'
+    },
+    { 
+      label: 'Comercial', 
+      icon: Users, 
+      page: 'Comercial'
+    },
+    { 
+      label: 'Operacional', 
+      icon: Settings, 
+      page: 'Operacional'
     },
     { 
       label: 'Gestão de Preços', 
