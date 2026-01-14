@@ -20,14 +20,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { motion, AnimatePresence } from "framer-motion";
-import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 
 export default function Layout({ children, currentPageName }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [user, setUser] = useState(null);
-  const [isRegistered, setIsRegistered] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('oracullo-theme') || 'light';
   });
@@ -48,19 +45,8 @@ export default function Layout({ children, currentPageName }) {
   }, []);
 
   const loadUser = async () => {
-    try {
-      const userData = await base44.auth.me();
-      setUser(userData);
-      
-      // Verificar se o usuário está registrado na entidade User
-      const users = await base44.entities.User.filter({ email: userData.email });
-      setIsRegistered(users.length > 0);
-    } catch (error) {
-      console.error('Erro ao carregar usuário:', error);
-      setIsRegistered(false);
-    } finally {
-      setLoading(false);
-    }
+    const userData = await base44.auth.me();
+    setUser(userData);
   };
 
   const menuItems = [
@@ -250,23 +236,6 @@ export default function Layout({ children, currentPageName }) {
       </div>
     </div>
   );
-
-  // Mostrar loading enquanto verifica usuário
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-[#135670] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Verificando acesso...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Mostrar erro se usuário não está registrado
-  if (isRegistered === false) {
-    return <UserNotRegisteredError />;
-  }
 
   return (
     <div className="min-h-screen bg-background transition-colors duration-200">
