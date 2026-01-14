@@ -95,6 +95,7 @@ export default function CustoVendaTable({ produtos, onUpdateProduto }) {
                 </TableHead>
                 <TableHead className="font-semibold text-muted-foreground">Margem</TableHead>
                 <TableHead className="font-semibold text-muted-foreground">Novo Preço</TableHead>
+                <TableHead className="font-semibold text-muted-foreground">Nova Margem</TableHead>
                 <TableHead className="font-semibold text-muted-foreground">Fonte</TableHead>
               </TableRow>
             </TableHeader>
@@ -102,6 +103,8 @@ export default function CustoVendaTable({ produtos, onUpdateProduto }) {
               <AnimatePresence>
                 {sortedProdutos.map((produto, index) => {
                   const margem = calcularMargem(produto.custo, produto.preco_venda);
+                  const novaMargemCalc = produto.novo_preco ? calcularMargem(produto.custo, produto.novo_preco) : null;
+                  const previewNovaMargem = editingId === produto.id && editValue ? calcularMargem(produto.custo, parseFloat(editValue)) : null;
                   return (
                     <motion.tr
                       key={produto.id}
@@ -159,6 +162,33 @@ export default function CustoVendaTable({ produtos, onUpdateProduto }) {
                               <Edit2 className="w-4 h-4 text-muted-foreground" />
                             </Button>
                           </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {editingId === produto.id && previewNovaMargem ? (
+                          <div className="flex items-center gap-1">
+                            {previewNovaMargem >= 30 ? (
+                              <TrendingUp className="w-4 h-4 text-emerald-500" />
+                            ) : (
+                              <TrendingDown className="w-4 h-4 text-orange-500" />
+                            )}
+                            <span className={previewNovaMargem >= 30 ? 'text-emerald-600 font-medium' : 'text-orange-600 font-medium'}>
+                              {previewNovaMargem}%
+                            </span>
+                          </div>
+                        ) : novaMargemCalc ? (
+                          <div className="flex items-center gap-1">
+                            {novaMargemCalc >= 30 ? (
+                              <TrendingUp className="w-4 h-4 text-emerald-500" />
+                            ) : (
+                              <TrendingDown className="w-4 h-4 text-orange-500" />
+                            )}
+                            <span className={novaMargemCalc >= 30 ? 'text-emerald-600 font-medium' : 'text-orange-600 font-medium'}>
+                              {novaMargemCalc}%
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
                         )}
                       </TableCell>
                       <TableCell>
