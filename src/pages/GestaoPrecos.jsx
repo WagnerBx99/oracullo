@@ -18,7 +18,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx-js-style';
 
 export default function GestaoPrecos() {
   const queryClient = useQueryClient();
@@ -41,19 +41,114 @@ export default function GestaoPrecos() {
   };
 
   const handleExportar = () => {
-    const dados = produtos.map(produto => ({
-      'Código': produto.codigo,
-      'Nome': produto.nome,
-      'Categoria': produto.categoria || 'N/A',
-      'Custo': produto.custo || 0,
-      'Preço Venda': produto.preco_venda || 0,
-      'Novo Preço': produto.novo_preco || produto.preco_venda || 0,
-      'Margem (%)': produto.margem || 0,
-      'Fonte': produto.fonte || 'N/A',
-      'Status': produto.status || 'ativo'
-    }));
+    const dados = produtos.map(produto => {
+      const margem = produto.margem || 0;
+      return {
+        'Código': produto.codigo,
+        'Nome': produto.nome,
+        'Categoria': produto.categoria || 'N/A',
+        'Custo': produto.custo || 0,
+        'Preço Venda': produto.preco_venda || 0,
+        'Novo Preço': produto.novo_preco || produto.preco_venda || 0,
+        'Margem (%)': margem,
+        'Fonte': produto.fonte || 'N/A',
+        'Status': produto.status || 'ativo'
+      };
+    });
 
     const ws = XLSX.utils.json_to_sheet(dados);
+    
+    // Estilos
+    const headerStyle = {
+      font: { bold: true, color: { rgb: "FFFFFF" }, sz: 12 },
+      fill: { fgColor: { rgb: "135670" } },
+      alignment: { horizontal: "center", vertical: "center" },
+      border: {
+        top: { style: "thin", color: { rgb: "000000" } },
+        bottom: { style: "thin", color: { rgb: "000000" } },
+        left: { style: "thin", color: { rgb: "000000" } },
+        right: { style: "thin", color: { rgb: "000000" } }
+      }
+    };
+    
+    const defaultStyle = {
+      alignment: { vertical: "center" },
+      border: {
+        top: { style: "thin", color: { rgb: "E2E8F0" } },
+        bottom: { style: "thin", color: { rgb: "E2E8F0" } },
+        left: { style: "thin", color: { rgb: "E2E8F0" } },
+        right: { style: "thin", color: { rgb: "E2E8F0" } }
+      }
+    };
+    
+    const margemAltaStyle = {
+      ...defaultStyle,
+      fill: { fgColor: { rgb: "D1FAE5" } },
+      font: { color: { rgb: "065F46" }, bold: true }
+    };
+    
+    const margemMediaStyle = {
+      ...defaultStyle,
+      fill: { fgColor: { rgb: "FEF3C7" } },
+      font: { color: { rgb: "92400E" } }
+    };
+    
+    const margemBaixaStyle = {
+      ...defaultStyle,
+      fill: { fgColor: { rgb: "FEE2E2" } },
+      font: { color: { rgb: "991B1B" } }
+    };
+    
+    // Aplicar estilo ao header
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for (let col = range.s.c; col <= range.e.c; col++) {
+      const cell = XLSX.utils.encode_cell({ r: 0, c: col });
+      if (!ws[cell]) continue;
+      ws[cell].s = headerStyle;
+    }
+    
+    // Aplicar estilos às linhas de dados
+    for (let row = 1; row <= range.e.r; row++) {
+      const margemCell = XLSX.utils.encode_cell({ r: row, c: 6 }); // Coluna Margem (%)
+      const margem = ws[margemCell] ? parseFloat(ws[margemCell].v) : 0;
+      
+      let margemStyle = defaultStyle;
+      if (margem >= 30) {
+        margemStyle = margemAltaStyle;
+      } else if (margem >= 15) {
+        margemStyle = margemMediaStyle;
+      } else if (margem > 0) {
+        margemStyle = margemBaixaStyle;
+      }
+      
+      // Aplicar estilo à célula de margem
+      if (ws[margemCell]) {
+        ws[margemCell].s = margemStyle;
+      }
+      
+      // Aplicar estilo padrão às outras células
+      for (let col = range.s.c; col <= range.e.c; col++) {
+        if (col === 6) continue; // Pular coluna de margem
+        const cell = XLSX.utils.encode_cell({ r: row, c: col });
+        if (ws[cell]) {
+          ws[cell].s = defaultStyle;
+        }
+      }
+    }
+    
+    // Ajustar largura das colunas
+    ws['!cols'] = [
+      { wch: 15 }, // Código
+      { wch: 35 }, // Nome
+      { wch: 15 }, // Categoria
+      { wch: 12 }, // Custo
+      { wch: 12 }, // Preço Venda
+      { wch: 12 }, // Novo Preço
+      { wch: 12 }, // Margem
+      { wch: 12 }, // Fonte
+      { wch: 10 }  // Status
+    ];
+    
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Produtos');
     

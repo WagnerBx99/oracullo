@@ -18,7 +18,7 @@ import {
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import * as XLSX from 'xlsx';
+import * as XLSX from 'xlsx-js-style';
 
 // Dados mock para demonstração
 const dadosConsolidado = [
@@ -213,6 +213,148 @@ export default function Relatorios() {
     
     // Criar workbook e worksheet
     const ws = XLSX.utils.aoa_to_sheet(dados);
+    
+    // Aplicar estilos
+    const headerStyle = {
+      font: { bold: true, color: { rgb: "FFFFFF" }, sz: 12 },
+      fill: { fgColor: { rgb: "135670" } },
+      alignment: { horizontal: "center", vertical: "center" },
+      border: {
+        top: { style: "thin", color: { rgb: "000000" } },
+        bottom: { style: "thin", color: { rgb: "000000" } },
+        left: { style: "thin", color: { rgb: "000000" } },
+        right: { style: "thin", color: { rgb: "000000" } }
+      }
+    };
+    
+    const estadoStyle = {
+      font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11 },
+      fill: { fgColor: { rgb: "475569" } },
+      alignment: { vertical: "center" }
+    };
+    
+    const totalFilialStyle = {
+      font: { bold: true, color: { rgb: "FFFFFF" }, sz: 10 },
+      fill: { fgColor: { rgb: "1a5872" } },
+      alignment: { vertical: "center" }
+    };
+    
+    const totalEstadoStyle = {
+      font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11 },
+      fill: { fgColor: { rgb: "0f4254" } },
+      alignment: { vertical: "center" }
+    };
+    
+    const totalGeralStyle = {
+      font: { bold: true, color: { rgb: "FFFFFF" }, sz: 12 },
+      fill: { fgColor: { rgb: "10b981" } },
+      alignment: { vertical: "center" }
+    };
+    
+    const tradingHeaderStyle = {
+      font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11 },
+      fill: { fgColor: { rgb: "991b1b" } },
+      alignment: { horizontal: "center", vertical: "center" }
+    };
+    
+    const tradingTotalStyle = {
+      font: { bold: true, color: { rgb: "FFFFFF" }, sz: 12 },
+      fill: { fgColor: { rgb: "ff5c00" } },
+      alignment: { vertical: "center" }
+    };
+    
+    const faturamentoStyle = {
+      font: { bold: true, color: { rgb: "FFFFFF" }, sz: 14 },
+      fill: { fgColor: { rgb: "1e293b" } },
+      alignment: { vertical: "center" }
+    };
+    
+    // Aplicar estilo ao header (linha 1)
+    for (let col = 0; col < 6; col++) {
+      const cell = XLSX.utils.encode_cell({ r: 0, c: col });
+      if (!ws[cell]) ws[cell] = { t: 's', v: '' };
+      ws[cell].s = headerStyle;
+    }
+    
+    // Aplicar estilos às linhas com base no conteúdo
+    let rowIndex = 1;
+    dadosConsolidado.forEach((estado) => {
+      // Linha do estado
+      for (let col = 0; col < 6; col++) {
+        const cell = XLSX.utils.encode_cell({ r: rowIndex, c: col });
+        if (!ws[cell]) ws[cell] = { t: 's', v: '' };
+        ws[cell].s = estadoStyle;
+      }
+      rowIndex++;
+      
+      estado.filiais.forEach((filial) => {
+        rowIndex += filial.vendedores.length;
+        
+        // Linha total da filial
+        for (let col = 0; col < 6; col++) {
+          const cell = XLSX.utils.encode_cell({ r: rowIndex, c: col });
+          if (!ws[cell]) ws[cell] = { t: 's', v: '' };
+          ws[cell].s = totalFilialStyle;
+        }
+        rowIndex++;
+      });
+      
+      // Linha total do estado
+      for (let col = 0; col < 6; col++) {
+        const cell = XLSX.utils.encode_cell({ r: rowIndex, c: col });
+        if (!ws[cell]) ws[cell] = { t: 's', v: '' };
+        ws[cell].s = totalEstadoStyle;
+      }
+      rowIndex++;
+    });
+    
+    // Total Filiais
+    for (let col = 0; col < 6; col++) {
+      const cell = XLSX.utils.encode_cell({ r: rowIndex, c: col });
+      if (!ws[cell]) ws[cell] = { t: 's', v: '' };
+      ws[cell].s = totalGeralStyle;
+    }
+    rowIndex++;
+    
+    // Linha vazia
+    rowIndex++;
+    
+    // Header Trading
+    for (let col = 0; col < 6; col++) {
+      const cell = XLSX.utils.encode_cell({ r: rowIndex, c: col });
+      if (!ws[cell]) ws[cell] = { t: 's', v: '' };
+      ws[cell].s = tradingHeaderStyle;
+    }
+    rowIndex++;
+    
+    // Linhas de trading
+    rowIndex += dadosTrading.length;
+    
+    // Total Trading
+    for (let col = 0; col < 6; col++) {
+      const cell = XLSX.utils.encode_cell({ r: rowIndex, c: col });
+      if (!ws[cell]) ws[cell] = { t: 's', v: '' };
+      ws[cell].s = tradingTotalStyle;
+    }
+    rowIndex++;
+    
+    // Faturamento Total
+    for (let col = 0; col < 6; col++) {
+      const cell = XLSX.utils.encode_cell({ r: rowIndex, c: col });
+      if (!ws[cell]) ws[cell] = { t: 's', v: '' };
+      ws[cell].s = faturamentoStyle;
+    }
+    
+    // Ajustar largura das colunas
+    ws['!cols'] = [
+      { wch: 30 },
+      { wch: 25 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 15 }
+    ];
+    
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Relatório de Vendas');
     
