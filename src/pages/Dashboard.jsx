@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Package, DollarSign, TrendingUp, BarChart3, Plus, Upload, RefreshCw, Database, Target, Edit3 } from 'lucide-react';
@@ -17,6 +17,16 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("consolidado");
   const [isEditMode, setIsEditMode] = useState(false);
   const [dashboardWidgets, setDashboardWidgets] = useState([]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const isAuth = await base44.auth.isAuthenticated();
+      if (!isAuth) {
+        base44.auth.redirectToLogin();
+      }
+    };
+    checkAuth();
+  }, []);
 
   const { data: produtos = [], isLoading } = useQuery({
     queryKey: ['produtos'],
