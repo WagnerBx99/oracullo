@@ -18,6 +18,7 @@ import {
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import * as XLSX from 'xlsx';
 
 // Dados mock para demonstração
 const dadosConsolidado = [
@@ -152,6 +153,73 @@ export default function Relatorios() {
     }).format(valor || 0);
   };
 
+  const exportarParaExcel = () => {
+    const dados = [];
+    
+    // Adicionar header
+    dados.push(['Filial', 'Vendedor', '05/Jan', 'Total', 'Diário', 'Parcial Mês']);
+    
+    // Adicionar dados consolidados
+    dadosConsolidado.forEach((estado) => {
+      dados.push([estado.estado, '', '', '', '', '']);
+      
+      estado.filiais.forEach((filial) => {
+        filial.vendedores.forEach((vendedor, idx) => {
+          dados.push([
+            idx === 0 ? filial.nome : '',
+            vendedor.nome,
+            vendedor.dia,
+            vendedor.total,
+            vendedor.diario,
+            vendedor.parcialMes
+          ]);
+        });
+        
+        dados.push([
+          `Total ${filial.nome}`,
+          '',
+          filial.total,
+          filial.total,
+          0,
+          0
+        ]);
+      });
+      
+      dados.push([
+        `Total Consolidado ${estado.estado}`,
+        '',
+        estado.totalEstado,
+        estado.totalEstado,
+        0,
+        0
+      ]);
+    });
+    
+    // Total Filiais
+    dados.push(['Total Consolidado Filiais', '', totalGeral, totalGeral, 0, 0]);
+    
+    // Trading
+    dados.push(['', '', '', '', '', '']);
+    dados.push(['VENDAS DIRETAS TRADING (DISTRIBUIÇÃO)', '', '', '', '', '']);
+    
+    dadosTrading.forEach((item) => {
+      dados.push([item.distribuidor, '', item.dia, item.total, 0, 0]);
+    });
+    
+    dados.push(['RESULTADO TRADING (DISTRIBUIÇÃO)', '', totalTrading, totalTrading, 0, 0]);
+    
+    // Faturamento Total
+    dados.push(['Faturamento do dia:', '', faturamentoTotal, faturamentoTotal, 0, 0]);
+    
+    // Criar workbook e worksheet
+    const ws = XLSX.utils.aoa_to_sheet(dados);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Relatório de Vendas');
+    
+    // Download
+    XLSX.writeFile(wb, `Relatorio_Vendas_${dataInicio}_${dataFim}.xlsx`);
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -208,7 +276,7 @@ export default function Relatorios() {
               <Filter className="w-4 h-4" />
               Filtrar
             </Button>
-            <Button variant="outline" className="gap-2">
+            <Button variant="outline" className="gap-2" onClick={exportarParaExcel}>
               <Download className="w-4 h-4" />
               Exportar Excel
             </Button>
