@@ -45,8 +45,18 @@ export default function Layout({ children, currentPageName }) {
   }, []);
 
   const loadUser = async () => {
-    const userData = await base44.auth.me();
-    setUser(userData);
+    try {
+      const isAuth = await base44.auth.isAuthenticated();
+      if (!isAuth) {
+        base44.auth.redirectToLogin();
+        return;
+      }
+      const userData = await base44.auth.me();
+      setUser(userData);
+    } catch (error) {
+      console.error('Erro ao carregar usuário:', error);
+      base44.auth.redirectToLogin();
+    }
   };
 
   const menuItems = [

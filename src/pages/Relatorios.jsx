@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -140,6 +140,16 @@ export default function Relatorios() {
   const [dataInicio, setDataInicio] = useState("2026-01-01");
   const [dataFim, setDataFim] = useState("2026-01-31");
   const [filialFiltro, setFilialFiltro] = useState("todas");
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const isAuth = await base44.auth.isAuthenticated();
+      if (!isAuth) {
+        base44.auth.redirectToLogin();
+      }
+    };
+    checkAuth();
+  }, []);
 
   const totalGeral = dadosConsolidado.reduce((sum, estado) => sum + estado.totalEstado, 0);
   const totalTrading = dadosTrading.reduce((sum, item) => sum + item.total, 0);
