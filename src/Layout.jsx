@@ -120,7 +120,7 @@ export default function Layout({ children, currentPageName }) {
           <div className="relative w-10 h-10">
             <img 
               src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69409d4cc6151ad10170675e/048d0a939_ImagemdoWhatsAppde2025-12-15s214435_49707b5a.jpg"
-              alt="PEC Motors"
+              alt="Pecmotors"
               className="w-full h-full object-contain"
             />
           </div>
@@ -131,7 +131,7 @@ export default function Layout({ children, currentPageName }) {
               exit={{ opacity: 0 }}
             >
               <h1 className="text-xl font-bold text-white tracking-wide">ORACULLO</h1>
-              <p className="text-xs text-slate-400">PEC Motors</p>
+              <p className="text-xs text-slate-400">Pecmotors</p>
             </motion.div>
           )}
         </div>
@@ -259,7 +259,7 @@ export default function Layout({ children, currentPageName }) {
         <div className="flex items-center gap-2 ml-4">
           <img 
             src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69409d4cc6151ad10170675e/048d0a939_ImagemdoWhatsAppde2025-12-15s214435_49707b5a.jpg"
-            alt="PEC Motors"
+            alt="Pecmotors"
             className="w-6 h-6 object-contain"
           />
           <span className="text-white font-bold tracking-wide">ORACULLO</span>
