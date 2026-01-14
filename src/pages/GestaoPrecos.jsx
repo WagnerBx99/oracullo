@@ -18,6 +18,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
+import * as XLSX from 'xlsx';
 
 export default function GestaoPrecos() {
   const queryClient = useQueryClient();
@@ -40,8 +41,23 @@ export default function GestaoPrecos() {
   };
 
   const handleExportar = () => {
-    // Lógica de exportação para Excel/CSV
-    console.log('Exportando dados...');
+    const dados = produtos.map(produto => ({
+      'Código': produto.codigo,
+      'Nome': produto.nome,
+      'Categoria': produto.categoria || 'N/A',
+      'Custo': produto.custo || 0,
+      'Preço Venda': produto.preco_venda || 0,
+      'Novo Preço': produto.novo_preco || produto.preco_venda || 0,
+      'Margem (%)': produto.margem || 0,
+      'Fonte': produto.fonte || 'N/A',
+      'Status': produto.status || 'ativo'
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dados);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Produtos');
+    
+    XLSX.writeFile(wb, `Gestao_Precos_${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   const handleEnviarParaERP = async () => {
