@@ -59,6 +59,9 @@ export default function GestaoPrecos() {
     const ws = XLSX.utils.json_to_sheet(dados);
     
     // Estilos
+    const currencyFormat = 'R$ #,##0.00';
+    const percentFormat = '0.00"%"';
+    
     const headerStyle = {
       font: { bold: true, color: { rgb: "FFFFFF" }, sz: 12 },
       fill: { fgColor: { rgb: "135670" } },
@@ -124,14 +127,21 @@ export default function GestaoPrecos() {
       // Aplicar estilo à célula de margem
       if (ws[margemCell]) {
         ws[margemCell].s = margemStyle;
+        ws[margemCell].z = percentFormat;
+        ws[margemCell].t = 'n';
       }
       
-      // Aplicar estilo padrão às outras células
+      // Aplicar estilo padrão e formato às outras células
       for (let col = range.s.c; col <= range.e.c; col++) {
         if (col === 6) continue; // Pular coluna de margem
         const cell = XLSX.utils.encode_cell({ r: row, c: col });
         if (ws[cell]) {
           ws[cell].s = defaultStyle;
+          // Aplicar formato de moeda às colunas 3, 4, 5 (Custo, Preço Venda, Novo Preço)
+          if ((col === 3 || col === 4 || col === 5) && typeof ws[cell].v === 'number') {
+            ws[cell].z = currencyFormat;
+            ws[cell].t = 'n';
+          }
         }
       }
     }

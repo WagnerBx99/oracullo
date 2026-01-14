@@ -215,6 +215,8 @@ export default function Relatorios() {
     const ws = XLSX.utils.aoa_to_sheet(dados);
     
     // Aplicar estilos
+    const currencyFormat = 'R$ #,##0.00';
+    
     const headerStyle = {
       font: { bold: true, color: { rgb: "FFFFFF" }, sz: 12 },
       fill: { fgColor: { rgb: "135670" } },
@@ -274,6 +276,19 @@ export default function Relatorios() {
       const cell = XLSX.utils.encode_cell({ r: 0, c: col });
       if (!ws[cell]) ws[cell] = { t: 's', v: '' };
       ws[cell].s = headerStyle;
+    }
+    
+    // Aplicar formato de moeda às colunas de valores (2, 3, 4, 5)
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for (let row = 1; row <= range.e.r; row++) {
+      for (let col = 2; col <= 5; col++) {
+        const cell = XLSX.utils.encode_cell({ r: row, c: col });
+        if (ws[cell] && typeof ws[cell].v === 'number') {
+          if (!ws[cell].s) ws[cell].s = {};
+          ws[cell].z = currencyFormat;
+          ws[cell].t = 'n';
+        }
+      }
     }
     
     // Aplicar estilos às linhas com base no conteúdo
