@@ -51,19 +51,19 @@ export default function CustoVendaTable({ produtos, onUpdateProduto }) {
   };
 
   return (
-    <Card className="border-0 shadow-lg">
-      <CardHeader className="border-b bg-slate-50/50">
+    <Card className="border-0 shadow-lg bg-card">
+      <CardHeader className="border-b bg-muted/30">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <CardTitle className="text-xl font-bold text-slate-800">
+          <CardTitle className="text-xl font-bold text-foreground">
             Custo x Venda
           </CardTitle>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Buscar produto..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-full md:w-64 border-slate-200"
+              className="pl-10 w-full md:w-64"
             />
           </div>
         </div>
@@ -72,11 +72,11 @@ export default function CustoVendaTable({ produtos, onUpdateProduto }) {
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-slate-50/50">
-                <TableHead className="font-semibold text-slate-600">Código</TableHead>
-                <TableHead className="font-semibold text-slate-600">Produto</TableHead>
+              <TableRow className="bg-muted/30">
+                <TableHead className="font-semibold text-muted-foreground">Código</TableHead>
+                <TableHead className="font-semibold text-muted-foreground">Produto</TableHead>
                 <TableHead 
-                  className="font-semibold text-slate-600 cursor-pointer hover:text-slate-800"
+                  className="font-semibold text-muted-foreground cursor-pointer hover:text-foreground"
                   onClick={() => handleSort('custo')}
                 >
                   <div className="flex items-center gap-1">
@@ -85,7 +85,7 @@ export default function CustoVendaTable({ produtos, onUpdateProduto }) {
                   </div>
                 </TableHead>
                 <TableHead 
-                  className="font-semibold text-slate-600 cursor-pointer hover:text-slate-800"
+                  className="font-semibold text-muted-foreground cursor-pointer hover:text-foreground"
                   onClick={() => handleSort('preco_venda')}
                 >
                   <div className="flex items-center gap-1">
@@ -93,9 +93,9 @@ export default function CustoVendaTable({ produtos, onUpdateProduto }) {
                     <ArrowUpDown className="w-4 h-4" />
                   </div>
                 </TableHead>
-                <TableHead className="font-semibold text-slate-600">Margem</TableHead>
-                <TableHead className="font-semibold text-slate-600">Novo Preço</TableHead>
-                <TableHead className="font-semibold text-slate-600">Fonte</TableHead>
+                <TableHead className="font-semibold text-muted-foreground">Margem</TableHead>
+                <TableHead className="font-semibold text-muted-foreground">Novo Preço</TableHead>
+                <TableHead className="font-semibold text-muted-foreground">Fonte</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -108,18 +108,18 @@ export default function CustoVendaTable({ produtos, onUpdateProduto }) {
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      className="hover:bg-slate-50 transition-colors"
+                      className="hover:bg-muted/50 transition-colors"
                     >
-                      <TableCell className="font-mono text-sm text-slate-600">
+                      <TableCell className="font-mono text-sm text-muted-foreground">
                         {produto.codigo}
                       </TableCell>
-                      <TableCell className="font-medium text-slate-800">
+                      <TableCell className="font-medium text-foreground">
                         {produto.nome}
                       </TableCell>
-                      <TableCell className="text-slate-600">
+                      <TableCell className="text-muted-foreground">
                         R$ {produto.custo?.toFixed(2) || '0.00'}
                       </TableCell>
-                      <TableCell className="text-slate-600">
+                      <TableCell className="text-muted-foreground">
                         R$ {produto.preco_venda?.toFixed(2) || '0.00'}
                       </TableCell>
                       <TableCell>
@@ -152,11 +152,11 @@ export default function CustoVendaTable({ produtos, onUpdateProduto }) {
                           </div>
                         ) : (
                           <div className="flex items-center gap-2">
-                            <span className="text-slate-600">
+                            <span className="text-muted-foreground">
                               {produto.novo_preco ? `R$ ${produto.novo_preco.toFixed(2)}` : '-'}
                             </span>
                             <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleStartEdit(produto)}>
-                              <Edit2 className="w-4 h-4 text-slate-400" />
+                              <Edit2 className="w-4 h-4 text-muted-foreground" />
                             </Button>
                           </div>
                         )}
@@ -174,7 +174,7 @@ export default function CustoVendaTable({ produtos, onUpdateProduto }) {
           </Table>
         </div>
         {sortedProdutos.length === 0 && (
-          <div className="text-center py-12 text-slate-500">
+          <div className="text-center py-12 text-muted-foreground">
             Nenhum produto encontrado
           </div>
         )}

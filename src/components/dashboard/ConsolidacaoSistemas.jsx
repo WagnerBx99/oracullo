@@ -46,8 +46,8 @@ export default function ConsolidacaoSistemas({ integracoes, onSincronizar }) {
     .sort((a, b) => new Date(b.ultima_sincronizacao) - new Date(a.ultima_sincronizacao))[0];
 
   return (
-    <Card className="border-0 shadow-lg">
-      <CardHeader className="border-b bg-slate-50/50">
+    <Card className="border-0 shadow-lg bg-card">
+      <CardHeader className="border-b bg-muted/30">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
@@ -55,7 +55,7 @@ export default function ConsolidacaoSistemas({ integracoes, onSincronizar }) {
             </div>
             <div>
               <CardTitle className="text-lg">Consolidação de Dados</CardTitle>
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 {totalConectados} de {Object.keys(sistemasConfig).length} sistemas integrados
               </p>
             </div>
@@ -74,23 +74,23 @@ export default function ConsolidacaoSistemas({ integracoes, onSincronizar }) {
       <CardContent className="p-6">
         {/* Status Resumido */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="p-4 bg-emerald-50 rounded-xl">
+          <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
             <p className="text-2xl font-bold text-emerald-600">{totalConectados}</p>
-            <p className="text-sm text-slate-600">Conectados</p>
+            <p className="text-sm text-muted-foreground">Conectados</p>
           </div>
-          <div className="p-4 bg-blue-50 rounded-xl">
+          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
             <p className="text-2xl font-bold text-blue-600">0</p>
-            <p className="text-sm text-slate-600">Sincronizando</p>
+            <p className="text-sm text-muted-foreground">Sincronizando</p>
           </div>
-          <div className="p-4 bg-slate-50 rounded-xl">
-            <p className="text-2xl font-bold text-slate-600">
+          <div className="p-4 bg-muted/50 rounded-xl">
+            <p className="text-2xl font-bold text-foreground">
               {Object.keys(sistemasConfig).length - totalConectados}
             </p>
-            <p className="text-sm text-slate-600">Desconectados</p>
+            <p className="text-sm text-muted-foreground">Desconectados</p>
           </div>
-          <div className="p-4 bg-purple-50 rounded-xl">
-            <p className="text-sm font-medium text-slate-700">Última Sinc.</p>
-            <p className="text-xs text-slate-500">
+          <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
+            <p className="text-sm font-medium text-foreground">Última Sinc.</p>
+            <p className="text-xs text-muted-foreground">
               {ultimaSincronizacao?.ultima_sincronizacao 
                 ? format(new Date(ultimaSincronizacao.ultima_sincronizacao), "dd/MM HH:mm", { locale: ptBR })
                 : 'Nunca'
@@ -101,7 +101,7 @@ export default function ConsolidacaoSistemas({ integracoes, onSincronizar }) {
 
         {/* Fluxo de Integração */}
         <div className="space-y-4">
-          <h3 className="font-semibold text-slate-700 mb-4">Fluxo de Integração</h3>
+          <h3 className="font-semibold text-foreground mb-4">Fluxo de Integração</h3>
           
           <div className="flex flex-col md:flex-row items-center gap-4">
             {/* Sistemas Origem */}
@@ -117,14 +117,14 @@ export default function ConsolidacaoSistemas({ integracoes, onSincronizar }) {
                     animate={{ opacity: 1, x: 0 }}
                     className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all ${
                       isConectado 
-                        ? 'bg-white border-emerald-200 shadow-sm' 
-                        : 'bg-slate-50 border-slate-200'
+                        ? 'bg-card border-emerald-200 shadow-sm' 
+                        : 'bg-muted/30 border-border'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-2 h-2 rounded-full ${isConectado ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                      <div className={`w-2 h-2 rounded-full ${isConectado ? 'bg-emerald-500' : 'bg-muted-foreground'}`} />
                       <div>
-                        <p className="font-semibold text-slate-800">{config.nome}</p>
+                        <p className="font-semibold text-foreground">{config.nome}</p>
                         <Badge variant="outline" className="text-xs mt-1">
                           {config.tipo}
                         </Badge>
@@ -169,8 +169,8 @@ export default function ConsolidacaoSistemas({ integracoes, onSincronizar }) {
             {/* Saídas */}
             <div className="flex-1 space-y-2">
               {['Visão Diretoria', 'KPIs Comerciais', 'Indicadores Operacionais', 'Relatórios'].map((item, i) => (
-                <div key={i} className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-100">
-                  <p className="text-sm font-medium text-slate-700">{item}</p>
+                <div key={i} className="p-3 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+                  <p className="text-sm font-medium text-foreground">{item}</p>
                 </div>
               ))}
             </div>

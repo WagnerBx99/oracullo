@@ -25,15 +25,15 @@ export default function StatsCard({ title, value, subtitle, icon: Icon, color = 
             <div className="flex-1 p-5">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-500 uppercase tracking-wide">{title}</p>
-                  <p className="text-3xl font-bold text-slate-800 mt-1">{value}</p>
+                  <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{title}</p>
+                  <p className="text-3xl font-bold text-foreground mt-1">{value}</p>
                   {subtitle && (
-                    <p className="text-sm text-slate-500 mt-1">{subtitle}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
                   )}
                   {trend && (
                     <div className={`flex items-center mt-2 text-sm ${trend > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
                       <span className="font-medium">{trend > 0 ? '+' : ''}{trend}%</span>
-                      <span className="text-slate-400 ml-1">vs mês anterior</span>
+                      <span className="text-muted-foreground ml-1">vs mês anterior</span>
                     </div>
                   )}
                 </div>

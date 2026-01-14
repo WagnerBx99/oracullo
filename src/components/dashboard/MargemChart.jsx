@@ -19,12 +19,12 @@ export default function MargemChart({ produtos }) {
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white p-4 rounded-xl shadow-xl border border-slate-100">
-          <p className="font-semibold text-slate-800 mb-2">{label}</p>
+        <div className="bg-card p-4 rounded-xl shadow-xl border border-border">
+          <p className="font-semibold text-foreground mb-2">{label}</p>
           <div className="space-y-1 text-sm">
-            <p className="text-slate-600">Margem: <span className="font-medium">{payload[0].value.toFixed(1)}%</span></p>
-            <p className="text-slate-600">Custo: <span className="font-medium">R$ {payload[0].payload.custo.toFixed(2)}</span></p>
-            <p className="text-slate-600">Venda: <span className="font-medium">R$ {payload[0].payload.venda.toFixed(2)}</span></p>
+            <p className="text-muted-foreground">Margem: <span className="font-medium text-foreground">{payload[0].value.toFixed(1)}%</span></p>
+            <p className="text-muted-foreground">Custo: <span className="font-medium text-foreground">R$ {payload[0].payload.custo.toFixed(2)}</span></p>
+            <p className="text-muted-foreground">Venda: <span className="font-medium text-foreground">R$ {payload[0].payload.venda.toFixed(2)}</span></p>
           </div>
         </div>
       );
@@ -33,9 +33,9 @@ export default function MargemChart({ produtos }) {
   };
 
   return (
-    <Card className="border-0 shadow-lg">
-      <CardHeader className="border-b bg-slate-50/50">
-        <CardTitle className="text-xl font-bold text-slate-800">
+    <Card className="border-0 shadow-lg bg-card">
+      <CardHeader className="border-b bg-muted/30">
+        <CardTitle className="text-xl font-bold text-foreground">
           Margem por Produto
         </CardTitle>
       </CardHeader>
@@ -43,18 +43,20 @@ export default function MargemChart({ produtos }) {
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={data} layout="vertical" margin={{ left: 20, right: 30 }}>
-              <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="#e2e8f0" />
+              <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} stroke="hsl(var(--border))" />
               <XAxis 
                 type="number" 
                 domain={[0, 100]} 
                 tickFormatter={(val) => `${val}%`}
-                tick={{ fill: '#64748b', fontSize: 12 }}
+                stroke="hsl(var(--muted-foreground))"
+                tick={{ fontSize: 12 }}
               />
               <YAxis 
                 type="category" 
                 dataKey="nome" 
                 width={100}
-                tick={{ fill: '#64748b', fontSize: 12 }}
+                stroke="hsl(var(--muted-foreground))"
+                tick={{ fontSize: 12 }}
               />
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="margem" radius={[0, 4, 4, 0]}>
@@ -68,15 +70,15 @@ export default function MargemChart({ produtos }) {
         <div className="flex items-center justify-center gap-6 mt-4 text-sm">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-emerald-500" />
-            <span className="text-slate-600">Ótima (≥40%)</span>
+            <span className="text-muted-foreground">Ótima (≥40%)</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-amber-500" />
-            <span className="text-slate-600">Regular (25-40%)</span>
+            <span className="text-muted-foreground">Regular (25-40%)</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-red-500" />
-            <span className="text-slate-600">Baixa (&lt;25%)</span>
+            <span className="text-muted-foreground">Baixa (&lt;25%)</span>
           </div>
         </div>
       </CardContent>
