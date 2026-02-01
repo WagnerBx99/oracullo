@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { MercosService } from '@/api/integrations';
 import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -77,29 +76,25 @@ export default function Integracoes() {
   const syncMutation = useMutation({
     mutationFn: async (integracao) => {
       if (integracao.sistema === 'mercos') {
-        const mercos = new MercosService(
-          integracao.api_key || 'd39001ac-0b14-11f0-8ed7-6e1485be00f2',
-          integracao.company_token || '2a2ff3ec-c3ab-11f0-b7b0-5605c2a06131',
-          false
-        );
-        
-        // Testa conexão
-        const isConnected = await mercos.testConnection();
-        if (!isConnected) {
-          throw new Error('Falha na conexão com MERCOS');
-        }
-        
-        // Busca dados
-        const clientes = await mercos.getClientes();
-        const produtos = await mercos.getProdutos();
-        
-        // Atualiza status da integração
-        await base44.entities.Integracao.update(integracao.id, {
-          status: 'conectado',
-          ultima_sincronizacao: new Date().toISOString()
+        // Chama função backend do Base44 para sincronizar
+        // Sincroniza clientes
+        const clientesResult = await base44.functions.syncMercos({
+          integracaoId: integracao.id,
+          tipo: 'clientes'
         });
         
-        return { clientes, produtos };
+        // Sincroniza produtos
+        const produtosResult = await base44.functions.syncMercos({
+          integracaoId: integracao.id,
+          tipo: 'produtos'
+        });
+        
+        return { 
+          clientes: clientesResult.data || [],
+          produtos: produtosResult.data || [],
+          totalClientes: clientesResult.total || 0,
+          totalProdutos: produtosResult.total || 0
+        };
       }
       throw new Error('Sistema não suportado ainda');
     },
