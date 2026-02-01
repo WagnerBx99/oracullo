@@ -22,3 +22,6 @@ export const ExtractDataFromUploadedFile = base44.integrations.Core.ExtractDataF
 
 
 
+
+// Integração MERCOS
+export { default as MercosService } from './mercosService';
