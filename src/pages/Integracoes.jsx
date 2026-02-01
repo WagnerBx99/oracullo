@@ -77,14 +77,16 @@ export default function Integracoes() {
     mutationFn: async (integracao) => {
       if (integracao.sistema === 'mercos') {
         // Chama função backend do Base44 para sincronizar
+        // Sintaxe correta: base44.functions.invoke("nomeFuncao", parametros)
+        
         // Sincroniza clientes
-        const clientesResult = await base44.functions.syncMercos({
+        const clientesResult = await base44.functions.invoke('syncMercos', {
           integracaoId: integracao.id,
           tipo: 'clientes'
         });
         
         // Sincroniza produtos
-        const produtosResult = await base44.functions.syncMercos({
+        const produtosResult = await base44.functions.invoke('syncMercos', {
           integracaoId: integracao.id,
           tipo: 'produtos'
         });
