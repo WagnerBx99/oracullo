@@ -50,7 +50,8 @@ export default function Integracoes() {
     tipo: '',
     sistema: '',
     api_url: '',
-    api_key: ''
+    api_key: '',
+    company_token: ''
   });
 
   const { data: integracoes = [], isLoading } = useQuery({
@@ -64,7 +65,7 @@ export default function Integracoes() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['integracoes'] });
       setDialogOpen(false);
-      setFormData({ nome: '', tipo: '', sistema: '', api_url: '', api_key: '' });
+      setFormData({ nome: '', tipo: '', sistema: '', api_url: '', api_key: '', company_token: '' });
     }
   });
 
@@ -220,6 +221,18 @@ export default function Integracoes() {
                   placeholder="••••••••"
                 />
               </div>
+              {formData.sistema === 'mercos' && (
+                <div className="space-y-2">
+                  <Label>Company Token (MERCOS)</Label>
+                  <Input
+                    type="password"
+                    value={formData.company_token}
+                    onChange={(e) => setFormData({ ...formData, company_token: e.target.value })}
+                    placeholder="••••••••"
+                  />
+                  <p className="text-xs text-slate-500">Token específico da empresa no MERCOS</p>
+                </div>
+              )}
               <Button 
                 className="w-full bg-blue-600 hover:bg-blue-700"
                 onClick={handleSubmit}
