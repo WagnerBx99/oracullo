@@ -51,7 +51,8 @@ export function AuthProvider({ children }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth deve ser usado dentro de AuthProvider');
+    console.warn('useAuth sendo usado fora do AuthProvider');
+    return { user: null, loading: false, login: async () => {}, register: async () => {}, logout: async () => {}, isAuthenticated: () => false };
   }
   return context;
 }
