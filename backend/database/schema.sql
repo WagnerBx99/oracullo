@@ -1,6 +1,29 @@
 -- Schema do Banco de Dados Oracullo
 -- PostgreSQL 16+
 
+-- Tabela de Usuários (autenticação JWT)
+CREATE TABLE IF NOT EXISTS usuarios (
+    id SERIAL PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    senha_hash TEXT NOT NULL,
+    role VARCHAR(50) DEFAULT 'user' CHECK (role IN ('user', 'admin')),
+    ativo BOOLEAN DEFAULT true,
+    ultimo_login TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabela de Refresh Tokens
+CREATE TABLE IF NOT EXISTS refresh_tokens (
+    id SERIAL PRIMARY KEY,
+    usuario_id INTEGER REFERENCES usuarios(id) ON DELETE CASCADE,
+    token TEXT UNIQUE NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    revogado BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Tabela de Integrações
 CREATE TABLE IF NOT EXISTS integracoes (
     id SERIAL PRIMARY KEY,
@@ -84,6 +107,9 @@ CREATE TABLE IF NOT EXISTS logs_sincronizacao (
 );
 
 -- Índices para performance
+CREATE INDEX IF NOT EXISTS idx_usuarios_email ON usuarios(email);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_usuario ON refresh_tokens(usuario_id);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);
 CREATE INDEX IF NOT EXISTS idx_integracoes_sistema ON integracoes(sistema);
 CREATE INDEX IF NOT EXISTS idx_integracoes_status ON integracoes(status);
 CREATE INDEX IF NOT EXISTS idx_clientes_integracao ON clientes(integracao_id);
@@ -114,4 +140,7 @@ CREATE TRIGGER update_produtos_updated_at BEFORE UPDATE ON produtos
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_pedidos_updated_at BEFORE UPDATE ON pedidos
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_usuarios_updated_at BEFORE UPDATE ON usuarios
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
