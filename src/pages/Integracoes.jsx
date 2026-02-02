@@ -76,19 +76,39 @@ export default function Integracoes() {
   const syncMutation = useMutation({
     mutationFn: async (integracao) => {
       if (integracao.sistema === 'mercos') {
-        // Chama função backend do Base44 para sincronizar
-        // Sintaxe correta: base44.functions.invoke("nomeFuncao", parametros)
+        // Chama backend local para sincronizar (sem CORS)
+        const backendUrl = window.location.origin + '/api';
         
         // Sincroniza clientes
-        const clientesResult = await base44.functions.invoke('syncMercos', {
-          integracaoId: integracao.id,
-          tipo: 'clientes'
+        const clientesResponse = await fetch(`${backendUrl}/mercos/sync`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            api_url: integracao.api_url,
+            api_key: integracao.api_key,
+            company_token: integracao.company_token,
+            tipo: 'clientes'
+          })
         });
+        const clientesResult = await clientesResponse.json();
         
         // Sincroniza produtos
-        const produtosResult = await base44.functions.invoke('syncMercos', {
-          integracaoId: integracao.id,
-          tipo: 'produtos'
+        const produtosResponse = await fetch(`${backendUrl}/mercos/sync`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            api_url: integracao.api_url,
+            api_key: integracao.api_key,
+            company_token: integracao.company_token,
+            tipo: 'produtos'
+          })
+        });
+        const produtosResult = await produtosResponse.json();
+        
+        // Atualizar status da integração no Base44
+        await base44.entities.Integracao.update(integracao.id, {
+          status: 'conectado',
+          ultima_sincronizacao: new Date().toISOString()
         });
         
         return { 
