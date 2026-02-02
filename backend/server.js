@@ -1,7 +1,12 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 import mercosRoutes from './routes/mercos.js';
+import integracoesRoutes from './routes/integracoes.js';
+import authRoutes from './routes/auth.js';
+import { authenticate } from './middleware/auth.js';
+import pool from './database/db.js';
 
 dotenv.config();
 
@@ -11,9 +16,14 @@ const PORT = process.env.PORT || 3001;
 // Middlewares
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 
-// Rotas
-app.use('/api/mercos', mercosRoutes);
+// Rotas públicas
+app.use('/api/auth', authRoutes);
+
+// Rotas protegidas (requerem autenticação)
+app.use('/api/integracoes', authenticate, integracoesRoutes);
+app.use('/api/mercos', authenticate, mercosRoutes);
 
 // Rota de health check
 app.get('/health', (req, res) => {

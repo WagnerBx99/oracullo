@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from './utils';
-import { base44 } from '@/api/base44Client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Database, 
@@ -24,6 +25,8 @@ import { motion, AnimatePresence } from "framer-motion";
 export default function Layout({ children, currentPageName }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user: authUser, logout } = useAuth();
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('oracullo-theme') || 'light';
@@ -41,20 +44,10 @@ export default function Layout({ children, currentPageName }) {
   };
 
   useEffect(() => {
-    loadUser();
-  }, []);
-
-  const loadUser = async () => {
-    try {
-      const isAuth = await base44.auth.isAuthenticated();
-      if (isAuth) {
-        const userData = await base44.auth.me();
-        setUser(userData);
-      }
-    } catch (error) {
-      console.error('Erro ao carregar usuário:', error);
+    if (authUser) {
+      setUser(authUser);
     }
-  };
+  }, [authUser]);
 
   const menuItems = [
     { 
@@ -113,8 +106,9 @@ export default function Layout({ children, currentPageName }) {
     }
   ];
 
-  const handleLogout = () => {
-    base44.auth.logout();
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
   };
 
   const NavContent = () => (

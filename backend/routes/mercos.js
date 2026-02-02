@@ -1,5 +1,7 @@
 import express from 'express';
 import axios from 'axios';
+import { Integracao } from '../models/Integracao.js';
+import { query } from '../database/db.js';
 
 const router = express.Router();
 
@@ -42,6 +44,26 @@ router.post('/sync', async (req, res) => {
     const data = response.data;
 
     console.log(`[MERCOS] Sucesso: ${data.length || 0} ${tipo} obtidos`);
+
+    // Salvar dados no banco (se tiver integracaoId)
+    if (req.body.integracaoId) {
+      try {
+        // Atualizar status da integração
+        await Integracao.update(req.body.integracaoId, {
+          status: 'conectado',
+          ultima_sincronizacao: new Date()
+        });
+
+        // Registrar log de sincronização
+        await query(
+          `INSERT INTO logs_sincronizacao (integracao_id, tipo, status, total_registros, mensagem)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [req.body.integracaoId, tipo, 'sucesso', data.length || 0, `Sincronização de ${tipo} concluída com sucesso`]
+        );
+      } catch (dbError) {
+        console.error('[MERCOS] Erro ao salvar no banco:', dbError.message);
+      }
+    }
 
     return res.json({
       success: true,

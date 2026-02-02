@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import api from '@/api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -55,12 +55,12 @@ export default function Integracoes() {
 
   const { data: integracoes = [], isLoading } = useQuery({
     queryKey: ['integracoes'],
-    queryFn: () => base44.entities.Integracao.list('-created_date'),
+    queryFn: () => api.integracoes.list(),
     initialData: []
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Integracao.create(data),
+    mutationFn: (data) => api.integracoes.create(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['integracoes'] });
       setDialogOpen(false);
@@ -69,46 +69,27 @@ export default function Integracoes() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => base44.entities.Integracao.delete(id),
+    mutationFn: (id) => api.integracoes.delete(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['integracoes'] })
   });
 
   const syncMutation = useMutation({
     mutationFn: async (integracao) => {
       if (integracao.sistema === 'mercos') {
-        // Chama backend local para sincronizar (sem CORS)
-        const backendUrl = window.location.origin + '/api';
-        
         // Sincroniza clientes
-        const clientesResponse = await fetch(`${backendUrl}/mercos/sync`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            api_url: integracao.api_url,
-            api_key: integracao.api_key,
-            company_token: integracao.company_token,
-            tipo: 'clientes'
-          })
+        const clientesResult = await api.mercos.sync(integracao.id, {
+          api_url: integracao.api_url,
+          api_key: integracao.api_key,
+          company_token: integracao.company_token,
+          tipo: 'clientes'
         });
-        const clientesResult = await clientesResponse.json();
         
         // Sincroniza produtos
-        const produtosResponse = await fetch(`${backendUrl}/mercos/sync`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            api_url: integracao.api_url,
-            api_key: integracao.api_key,
-            company_token: integracao.company_token,
-            tipo: 'produtos'
-          })
-        });
-        const produtosResult = await produtosResponse.json();
-        
-        // Atualizar status da integração no Base44
-        await base44.entities.Integracao.update(integracao.id, {
-          status: 'conectado',
-          ultima_sincronizacao: new Date().toISOString()
+        const produtosResult = await api.mercos.sync(integracao.id, {
+          api_url: integracao.api_url,
+          api_key: integracao.api_key,
+          company_token: integracao.company_token,
+          tipo: 'produtos'
         });
         
         return { 
@@ -124,10 +105,14 @@ export default function Integracoes() {
       queryClient.invalidateQueries({ queryKey: ['integracoes'] });
       console.log('Sincronização concluída:', data);
     },
-    onError: (error, integracao) => {
-      base44.entities.Integracao.update(integracao.id, {
-        status: 'erro'
-      });
+    onError: async (error, integracao) => {
+      try {
+        await api.integracoes.update(integracao.id, {
+          status: 'erro'
+        });
+      } catch (updateError) {
+        console.error('Erro ao atualizar status:', updateError);
+      }
       console.error('Erro na sincronização:', error);
     }
   });
