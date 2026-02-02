@@ -25,7 +25,8 @@ import { motion, AnimatePresence } from "framer-motion";
 export default function Layout({ children, currentPageName }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user: authUser, logout } = useAuth();
+  const auth = useAuth();
+  const { user: authUser, logout } = auth || { user: null, logout: () => {} };
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [theme, setTheme] = useState(() => {
