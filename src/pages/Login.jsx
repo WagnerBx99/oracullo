@@ -26,15 +26,21 @@ export default function Login() {
     setLoading(true);
 
     try {
+      console.log('[Login] Iniciando login...');
       if (isLogin) {
-        await login(formData.email, formData.senha);
+        const result = await login(formData.email, formData.senha);
+        console.log('[Login] Login bem-sucedido:', result);
       } else {
-        await register(formData.nome, formData.email, formData.senha);
+        const result = await register(formData.nome, formData.email, formData.senha);
+        console.log('[Login] Registro bem-sucedido:', result);
       }
 
+      console.log('[Login] Redirecionando para dashboard...');
       // Redirecionar para dashboard
       window.location.href = '/';
+      console.log('[Login] Redirecionamento executado');
     } catch (err) {
+      console.error('[Login] Erro:', err);
       setError(err.message || 'Erro ao fazer login');
     } finally {
       setLoading(false);
