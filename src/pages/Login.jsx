@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '@/api/apiClient';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { LogIn, UserPlus } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login, register } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -26,16 +27,9 @@ export default function Login() {
 
     try {
       if (isLogin) {
-        await api.auth.login({
-          email: formData.email,
-          senha: formData.senha
-        });
+        await login(formData.email, formData.senha);
       } else {
-        await api.auth.register({
-          nome: formData.nome,
-          email: formData.email,
-          senha: formData.senha
-        });
+        await register(formData.nome, formData.email, formData.senha);
       }
 
       // Redirecionar para dashboard
