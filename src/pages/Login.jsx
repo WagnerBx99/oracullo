@@ -33,7 +33,7 @@ export default function Login() {
       }
 
       // Redirecionar para dashboard
-      navigate('/');
+      window.location.href = '/';
     } catch (err) {
       setError(err.message || 'Erro ao fazer login');
     } finally {
