@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -63,11 +62,9 @@ export default function Configuracoes() {
   const [perfis, setPerfis] = useState(perfisDefault);
   const [selectedPerfil, setSelectedPerfil] = useState(perfis[0]);
 
-  const { data: usuarios = [], isLoading } = useQuery({
-    queryKey: ['usuarios'],
-    queryFn: () => base44.entities.User.list(),
-    initialData: []
-  });
+  // Usuários serão carregados do backend Node.js
+  const usuarios = [];
+  const isLoading = false;
 
   const togglePermissao = (perfilId, permissaoId) => {
     setPerfis(prev => prev.map(p => {

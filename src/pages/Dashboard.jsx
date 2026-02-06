@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Package, DollarSign, TrendingUp, BarChart3, Plus, Upload, RefreshCw, Database, Target, Edit3 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -20,24 +19,24 @@ export default function Dashboard() {
 
   const { data: produtos = [], isLoading } = useQuery({
     queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list('-created_date', 100),
+    queryFn: async () => [],
     initialData: []
   });
 
   const { data: integracoes = [] } = useQuery({
     queryKey: ['integracoes'],
-    queryFn: () => base44.entities.Integracao.list(),
+    queryFn: async () => [],
     initialData: []
   });
 
   const { data: kpis = [] } = useQuery({
     queryKey: ['kpis'],
-    queryFn: () => base44.entities.KPI.list('-created_date', 20),
+    queryFn: async () => [],
     initialData: []
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Produto.update(id, data),
+    mutationFn: async ({ id, data }) => {}, // Base44 removido
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['produtos'] })
   });
 

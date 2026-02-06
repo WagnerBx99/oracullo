@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -49,11 +48,16 @@ export default function LogAtividades() {
   const [filtroTipo, setFiltroTipo] = useState("todos");
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: logs = [], isLoading } = useQuery({
+  // Dados removidos (Base44 removido)
+  const dados = [];
+  const logs = [];
+  /*
+  const { data: logs = [] } = useQuery({
     queryKey: ['logs'],
-    queryFn: () => base44.entities.LogAtividade.list('-created_date', 100),
+    queryFn: async () => [],
     initialData: []
   });
+  */
 
   const filteredLogs = logs.filter(log => {
     const matchModulo = filtroModulo === "todos" || log.modulo === filtroModulo;

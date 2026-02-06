@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,12 +26,12 @@ export default function GestaoPrecos() {
 
   const { data: produtos = [], isLoading } = useQuery({
     queryKey: ['produtos'],
-    queryFn: () => base44.entities.Produto.list('-created_date', 100),
+    queryFn: async () => [],
     initialData: []
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => base44.entities.Produto.update(id, data),
+    mutationFn: async ({ id, data }) => {}, // Base44 removido
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['produtos'] })
   });
 
@@ -178,10 +177,13 @@ export default function GestaoPrecos() {
       
       // Após o envio bem-sucedido, atualizar preco_venda com novo_preco
       for (const produto of produtosComNovoPreco) {
-        await base44.entities.Produto.update(produto.id, {
+        // Base44 removido - await update
+        /*
+        await update({
           preco_venda: produto.novo_preco,
-          novo_preco: null // Limpar o novo_preco após aplicar
+          novo_preco: null
         });
+        */
       }
       
       queryClient.invalidateQueries({ queryKey: ['produtos'] });

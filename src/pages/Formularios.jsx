@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,7 +36,7 @@ export default function Formularios() {
   });
 
   const createProdutoMutation = useMutation({
-    mutationFn: (data) => base44.entities.Produto.create(data),
+    mutationFn: async () => {}, // Base44 removido
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['produtos'] });
       setProdutoForm({
