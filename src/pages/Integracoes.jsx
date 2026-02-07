@@ -136,6 +136,7 @@ export default function Integracoes() {
   const handleSubmit = () => {
     createMutation.mutate({
       ...formData,
+      tipo: formData.tipo.toUpperCase(),
       status: 'desconectado'
     });
   };
