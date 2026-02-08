@@ -8,6 +8,8 @@ import usuariosRoutes from './routes/usuarios.js';
 import perfisRoutes from './routes/perfis.js';
 import integracoesRoutes from './routes/integracoes.js';
 import clientesRoutes from './routes/clientes.js';
+import dashboardRoutes from './routes/dashboard.js';
+import relatoriosRoutes from './routes/relatorios.js';
 import authRoutes from './routes/auth.js';
 import { authenticate } from './middleware/auth.js';
 import pool from './database/db.js';
@@ -32,6 +34,8 @@ app.use('/api/omie', authenticate, omieRoutes);
 app.use('/api/usuarios', authenticate, usuariosRoutes);
 app.use('/api/perfis', authenticate, perfisRoutes);
 app.use('/api/clientes', authenticate, clientesRoutes);
+app.use('/api/dashboard', authenticate, dashboardRoutes);
+app.use('/api/relatorios', authenticate, relatoriosRoutes);
 
 // Rota de health check
 app.get('/health', (req, res) => {
