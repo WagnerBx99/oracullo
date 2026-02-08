@@ -12,137 +12,66 @@ import {
   Building2,
   Users,
   TrendingUp,
-  Filter
+  Filter,
+  RefreshCw
 } from 'lucide-react';
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import * as XLSX from 'xlsx-js-style';
-
-// Dados mock para demonstração
-const dadosConsolidado = [
-  {
-    estado: 'Santa Catarina',
-    filiais: [
-      {
-        nome: 'Blumenau',
-        vendedores: [
-          { nome: 'Edson Melo', dia: 18545.54, total: 18545.54, diario: 0, parcialMes: 0 },
-          { nome: 'João Otavio', dia: 23066.55, total: 23066.55, diario: 0, parcialMes: 0 },
-          { nome: 'Kailany Cristina', dia: 0, total: 0, diario: 0, parcialMes: 0 }
-        ],
-        total: 63537.00
-      },
-      {
-        nome: 'Chapecó',
-        vendedores: [
-          { nome: 'Cristiane', dia: 0, total: 0, diario: 0, parcialMes: 0 },
-          { nome: 'Farinhas', dia: 2432.81, total: 2432.81, diario: 0, parcialMes: 0 },
-          { nome: 'Isaac Quadros', dia: 3561.22, total: 3561.22, diario: 0, parcialMes: 0 },
-          { nome: 'Chapecó', dia: 7122.53, total: 7122.53, diario: 0, parcialMes: 0 }
-        ],
-        total: 7122.53
-      },
-      {
-        nome: 'Joinville',
-        vendedores: [
-          { nome: 'Farinhas', dia: 12218.09, total: 12218.09, diario: 0, parcialMes: 0 }
-        ],
-        total: 12218.09
-      }
-    ],
-    totalEstado: 48958.02
-  },
-  {
-    estado: 'Paraná',
-    filiais: [
-      {
-        nome: 'Curitiba',
-        vendedores: [
-          { nome: 'Marcos Candido', dia: 3480.29, total: 3480.29, diario: 0, parcialMes: 0 },
-          { nome: 'Anderson Clososki', dia: 232.11, total: 232.11, diario: 0, parcialMes: 0 }
-        ],
-        total: 16017.65
-      },
-      {
-        nome: 'Maringá',
-        vendedores: [
-          { nome: 'Caio Vitor', dia: 4168.89, total: 4168.89, diario: 0, parcialMes: 0 },
-          { nome: 'Marcia Maria', dia: 0, total: 0, diario: 0, parcialMes: 0 }
-        ],
-        total: 21924.81
-      }
-    ],
-    totalEstado: 63537.00
-  },
-  {
-    estado: 'Belo Horizonte',
-    filiais: [
-      {
-        nome: 'Belo Horizonte',
-        vendedores: [
-          { nome: 'Rogério', dia: 1389.94, total: 1389.94, diario: 0, parcialMes: 0 },
-          { nome: 'Hugo', dia: 1778.16, total: 1778.16, diario: 0, parcialMes: 0 },
-          { nome: 'Thiago', dia: 4182.14, total: 4182.14, diario: 0, parcialMes: 0 }
-        ],
-        total: 14727.59
-      }
-    ],
-    totalEstado: 14727.59
-  },
-  {
-    estado: 'São Paulo',
-    filiais: [
-      {
-        nome: 'Sorocaba',
-        vendedores: [
-          { nome: 'Ana Galão', dia: 5619.40, total: 5619.40, diario: 0, parcialMes: 0 },
-          { nome: 'Cyro Galão', dia: 0, total: 0, diario: 0, parcialMes: 0 }
-        ],
-        total: 5619.40
-      },
-      {
-        nome: 'São Paulo Capital',
-        vendedores: [
-          { nome: 'Sara', dia: 3675.10, total: 3675.10, diario: 0, parcialMes: 0 },
-          { nome: 'Erik', dia: 1766.21, total: 1766.21, diario: 0, parcialMes: 0 }
-        ],
-        total: 5441.31
-      }
-    ],
-    totalEstado: 11060.71
-  },
-  {
-    estado: 'Brasília',
-    filiais: [
-      {
-        nome: 'Distrito Federal',
-        vendedores: [
-          { nome: 'Mario Marden', dia: 11912.73, total: 11912.73, diario: 0, parcialMes: 0 }
-        ],
-        total: 11912.73
-      }
-    ],
-    totalEstado: 11912.73
-  }
-];
-
-const dadosTrading = [
-  { distribuidor: 'Via Lote', dia: 0, total: 0 },
-  { distribuidor: 'Golbrond', dia: 0, total: 0 },
-  { distribuidor: 'Avon', dia: 0, total: 0 },
-  { distribuidor: 'Sants', dia: 0, total: 0 },
-  { distribuidor: 'Cadu Varejo Atacadista', dia: 9620.00, total: 9620.00 }
-];
+import api from '@/api/apiClient';
 
 export default function Relatorios() {
   const [activeTab, setActiveTab] = useState("consolidado");
-  const [dataInicio, setDataInicio] = useState("2026-01-01");
-  const [dataFim, setDataFim] = useState("2026-01-31");
+  const hoje = new Date();
+  const [dataInicio, setDataInicio] = useState(new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0]);
+  const [dataFim, setDataFim] = useState(new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split('T')[0]);
   const [filialFiltro, setFilialFiltro] = useState("todas");
 
-  const totalGeral = dadosConsolidado.reduce((sum, estado) => sum + estado.totalEstado, 0);
-  const totalTrading = dadosTrading.reduce((sum, item) => sum + item.total, 0);
+  // Buscar vendas consolidado
+  const { data: vendasConsolidado, isLoading: loadingConsolidado, refetch: refetchConsolidado } = useQuery({
+    queryKey: ['relatorios-vendas-consolidado', dataInicio, dataFim, filialFiltro],
+    queryFn: () => api.relatorios.vendasConsolidado({
+      data_inicio: dataInicio,
+      data_fim: dataFim,
+      ...(filialFiltro !== 'todas' && { filial_id: filialFiltro })
+    })
+  });
+
+  // Buscar vendas trading
+  const { data: vendasTrading, isLoading: loadingTrading } = useQuery({
+    queryKey: ['relatorios-vendas-trading', dataInicio, dataFim],
+    queryFn: () => api.relatorios.vendasTrading({
+      data_inicio: dataInicio,
+      data_fim: dataFim
+    })
+  });
+
+  // Buscar resumo geral
+  const { data: resumo, isLoading: loadingResumo } = useQuery({
+    queryKey: ['relatorios-resumo', dataInicio, dataFim],
+    queryFn: () => api.relatorios.resumoGeral({
+      data_inicio: dataInicio,
+      data_fim: dataFim
+    })
+  });
+
+  // Buscar clientes por filial
+  const { data: clientesFilial, isLoading: loadingClientes } = useQuery({
+    queryKey: ['relatorios-clientes-filial'],
+    queryFn: () => api.relatorios.clientesPorFilial()
+  });
+
+  // Buscar integrações para o filtro
+  const { data: integracoes = [] } = useQuery({
+    queryKey: ['integracoes'],
+    queryFn: () => api.integracoes.list()
+  });
+
+  const isLoading = loadingConsolidado || loadingTrading || loadingResumo;
+
+  const totalGeral = vendasConsolidado?.total_geral || 0;
+  const totalTrading = vendasTrading?.total_trading || 0;
   const faturamentoTotal = totalGeral + totalTrading;
 
   const formatarValor = (valor) => {
@@ -153,62 +82,66 @@ export default function Relatorios() {
   };
 
   const exportarParaExcel = () => {
+    if (!vendasConsolidado) return;
+
     const dados = [];
     
     // Adicionar header
-    dados.push(['Filial', 'Vendedor', '05/Jan', 'Total', 'Diário', 'Parcial Mês']);
+    dados.push(['Estado/Filial', 'Vendedor', 'Total Vendas', 'Total Pedidos', 'Ticket Médio']);
     
     // Adicionar dados consolidados
-    dadosConsolidado.forEach((estado) => {
-      dados.push([estado.estado, '', '', '', '', '']);
+    vendasConsolidado.estados.forEach((estado) => {
+      dados.push([estado.estado, '', '', '', '']);
       
       estado.filiais.forEach((filial) => {
-        filial.vendedores.forEach((vendedor, idx) => {
-          dados.push([
-            idx === 0 ? filial.nome : '',
-            vendedor.nome,
-            vendedor.dia,
-            vendedor.total,
-            vendedor.diario,
-            vendedor.parcialMes
-          ]);
-        });
-        
         dados.push([
-          `Total ${filial.nome}`,
+          filial.nome,
           '',
-          filial.total,
-          filial.total,
-          0,
-          0
+          filial.total_vendas,
+          filial.total_pedidos,
+          filial.ticket_medio
         ]);
+        
+        // Se houver vendedores, adicionar
+        if (filial.vendedores && filial.vendedores.length > 0) {
+          filial.vendedores.forEach((vendedor) => {
+            dados.push([
+              '',
+              vendedor.nome,
+              vendedor.total || 0,
+              vendedor.pedidos || 0,
+              0
+            ]);
+          });
+        }
       });
       
       dados.push([
-        `Total Consolidado ${estado.estado}`,
+        `Total ${estado.estado}`,
         '',
-        estado.totalEstado,
-        estado.totalEstado,
-        0,
-        0
+        estado.total_estado,
+        '',
+        ''
       ]);
     });
     
     // Total Filiais
-    dados.push(['Total Consolidado Filiais', '', totalGeral, totalGeral, 0, 0]);
+    dados.push(['Total Consolidado Filiais', '', totalGeral, '', '']);
     
     // Trading
-    dados.push(['', '', '', '', '', '']);
-    dados.push(['VENDAS DIRETAS TRADING (DISTRIBUIÇÃO)', '', '', '', '', '']);
-    
-    dadosTrading.forEach((item) => {
-      dados.push([item.distribuidor, '', item.dia, item.total, 0, 0]);
-    });
-    
-    dados.push(['RESULTADO TRADING (DISTRIBUIÇÃO)', '', totalTrading, totalTrading, 0, 0]);
+    if (vendasTrading && vendasTrading.distribuidores && vendasTrading.distribuidores.length > 0) {
+      dados.push(['', '', '', '', '']);
+      dados.push(['VENDAS DIRETAS TRADING (DISTRIBUIÇÃO)', '', '', '', '']);
+      
+      vendasTrading.distribuidores.forEach((item) => {
+        dados.push([item.distribuidor, '', item.total_vendas, item.total_pedidos, '']);
+      });
+      
+      dados.push(['RESULTADO TRADING (DISTRIBUIÇÃO)', '', totalTrading, '', '']);
+    }
     
     // Faturamento Total
-    dados.push(['Faturamento do dia:', '', faturamentoTotal, faturamentoTotal, 0, 0]);
+    dados.push(['Faturamento Total do Período:', '', faturamentoTotal, '', '']);
     
     // Criar workbook e worksheet
     const ws = XLSX.utils.aoa_to_sheet(dados);
@@ -228,59 +161,17 @@ export default function Relatorios() {
       }
     };
     
-    const estadoStyle = {
-      font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11 },
-      fill: { fgColor: { rgb: "475569" } },
-      alignment: { vertical: "center" }
-    };
-    
-    const totalFilialStyle = {
-      font: { bold: true, color: { rgb: "FFFFFF" }, sz: 10 },
-      fill: { fgColor: { rgb: "1a5872" } },
-      alignment: { vertical: "center" }
-    };
-    
-    const totalEstadoStyle = {
-      font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11 },
-      fill: { fgColor: { rgb: "0f4254" } },
-      alignment: { vertical: "center" }
-    };
-    
-    const totalGeralStyle = {
-      font: { bold: true, color: { rgb: "FFFFFF" }, sz: 12 },
-      fill: { fgColor: { rgb: "10b981" } },
-      alignment: { vertical: "center" }
-    };
-    
-    const tradingHeaderStyle = {
-      font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11 },
-      fill: { fgColor: { rgb: "991b1b" } },
-      alignment: { horizontal: "center", vertical: "center" }
-    };
-    
-    const tradingTotalStyle = {
-      font: { bold: true, color: { rgb: "FFFFFF" }, sz: 12 },
-      fill: { fgColor: { rgb: "ff5c00" } },
-      alignment: { vertical: "center" }
-    };
-    
-    const faturamentoStyle = {
-      font: { bold: true, color: { rgb: "FFFFFF" }, sz: 14 },
-      fill: { fgColor: { rgb: "1e293b" } },
-      alignment: { vertical: "center" }
-    };
-    
     // Aplicar estilo ao header (linha 1)
-    for (let col = 0; col < 6; col++) {
+    for (let col = 0; col < 5; col++) {
       const cell = XLSX.utils.encode_cell({ r: 0, c: col });
       if (!ws[cell]) ws[cell] = { t: 's', v: '' };
       ws[cell].s = headerStyle;
     }
     
-    // Aplicar formato de moeda às colunas de valores (2, 3, 4, 5)
+    // Aplicar formato de moeda às colunas de valores (2, 3, 4)
     const range = XLSX.utils.decode_range(ws['!ref']);
     for (let row = 1; row <= range.e.r; row++) {
-      for (let col = 2; col <= 5; col++) {
+      for (let col = 2; col <= 4; col++) {
         const cell = XLSX.utils.encode_cell({ r: row, c: col });
         if (ws[cell] && typeof ws[cell].v === 'number') {
           if (!ws[cell].s) ws[cell].s = {};
@@ -290,90 +181,21 @@ export default function Relatorios() {
       }
     }
     
-    // Aplicar estilos às linhas com base no conteúdo
-    let rowIndex = 1;
-    dadosConsolidado.forEach((estado) => {
-      // Linha do estado
-      for (let col = 0; col < 6; col++) {
-        const cell = XLSX.utils.encode_cell({ r: rowIndex, c: col });
-        if (!ws[cell]) ws[cell] = { t: 's', v: '' };
-        ws[cell].s = estadoStyle;
-      }
-      rowIndex++;
-      
-      estado.filiais.forEach((filial) => {
-        rowIndex += filial.vendedores.length;
-        
-        // Linha total da filial
-        for (let col = 0; col < 6; col++) {
-          const cell = XLSX.utils.encode_cell({ r: rowIndex, c: col });
-          if (!ws[cell]) ws[cell] = { t: 's', v: '' };
-          ws[cell].s = totalFilialStyle;
-        }
-        rowIndex++;
-      });
-      
-      // Linha total do estado
-      for (let col = 0; col < 6; col++) {
-        const cell = XLSX.utils.encode_cell({ r: rowIndex, c: col });
-        if (!ws[cell]) ws[cell] = { t: 's', v: '' };
-        ws[cell].s = totalEstadoStyle;
-      }
-      rowIndex++;
-    });
-    
-    // Total Filiais
-    for (let col = 0; col < 6; col++) {
-      const cell = XLSX.utils.encode_cell({ r: rowIndex, c: col });
-      if (!ws[cell]) ws[cell] = { t: 's', v: '' };
-      ws[cell].s = totalGeralStyle;
-    }
-    rowIndex++;
-    
-    // Linha vazia
-    rowIndex++;
-    
-    // Header Trading
-    for (let col = 0; col < 6; col++) {
-      const cell = XLSX.utils.encode_cell({ r: rowIndex, c: col });
-      if (!ws[cell]) ws[cell] = { t: 's', v: '' };
-      ws[cell].s = tradingHeaderStyle;
-    }
-    rowIndex++;
-    
-    // Linhas de trading
-    rowIndex += dadosTrading.length;
-    
-    // Total Trading
-    for (let col = 0; col < 6; col++) {
-      const cell = XLSX.utils.encode_cell({ r: rowIndex, c: col });
-      if (!ws[cell]) ws[cell] = { t: 's', v: '' };
-      ws[cell].s = tradingTotalStyle;
-    }
-    rowIndex++;
-    
-    // Faturamento Total
-    for (let col = 0; col < 6; col++) {
-      const cell = XLSX.utils.encode_cell({ r: rowIndex, c: col });
-      if (!ws[cell]) ws[cell] = { t: 's', v: '' };
-      ws[cell].s = faturamentoStyle;
-    }
-    
-    // Ajustar largura das colunas
+    // Definir largura das colunas
     ws['!cols'] = [
-      { wch: 30 },
-      { wch: 25 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 15 }
+      { wch: 30 }, // Estado/Filial
+      { wch: 25 }, // Vendedor
+      { wch: 15 }, // Total Vendas
+      { wch: 15 }, // Total Pedidos
+      { wch: 15 }  // Ticket Médio
     ];
     
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Relatório de Vendas');
+    XLSX.utils.book_append_sheet(wb, ws, 'Relatório Vendas');
     
-    // Download
-    XLSX.writeFile(wb, `Relatorio_Vendas_${dataInicio}_${dataFim}.xlsx`);
+    // Gerar nome do arquivo com data
+    const nomeArquivo = `relatorio_vendas_${dataInicio}_a_${dataFim}.xlsx`;
+    XLSX.writeFile(wb, nomeArquivo);
   };
 
   return (
@@ -382,103 +204,149 @@ export default function Relatorios() {
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
       >
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#135670] to-[#ff5c00] flex items-center justify-center shadow-lg">
-            <FileText className="w-6 h-6 text-white" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold gradient-text">Relatórios de Vendas</h1>
-            <p className="text-muted-foreground">Acompanhamento diário e consolidado por filial</p>
-          </div>
+        <div>
+          <h1 className="text-3xl font-bold gradient-text">Relatórios</h1>
+          <p className="text-muted-foreground mt-1">Análises detalhadas de vendas e performance</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="outline" 
+            className="gap-2"
+            onClick={() => {
+              refetchConsolidado();
+            }}
+          >
+            <RefreshCw className="w-4 h-4" />
+            Atualizar
+          </Button>
+          <Button 
+            className="gap-2 bg-gradient-to-r from-[#135670] to-[#ff5c00] text-white"
+            onClick={exportarParaExcel}
+            disabled={isLoading || !vendasConsolidado}
+          >
+            <Download className="w-4 h-4" />
+            Exportar Excel
+          </Button>
         </div>
       </motion.div>
 
       {/* Filtros */}
-      <Card className="border-0 shadow-lg bg-card">
+      <Card className="border-0 shadow-lg">
+        <CardHeader className="border-b bg-muted/30">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Filter className="w-5 h-5" />
+            Filtros
+          </CardTitle>
+        </CardHeader>
         <CardContent className="p-6">
-          <div className="flex flex-wrap items-end gap-4">
-            <div className="flex-1 min-w-[200px]">
-              <label className="text-sm font-medium text-foreground mb-2 block">Data Início</label>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Data Início</label>
               <Input 
                 type="date" 
                 value={dataInicio}
                 onChange={(e) => setDataInicio(e.target.value)}
               />
             </div>
-            <div className="flex-1 min-w-[200px]">
-              <label className="text-sm font-medium text-foreground mb-2 block">Data Fim</label>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Data Fim</label>
               <Input 
                 type="date" 
                 value={dataFim}
                 onChange={(e) => setDataFim(e.target.value)}
               />
             </div>
-            <div className="flex-1 min-w-[200px]">
-              <label className="text-sm font-medium text-foreground mb-2 block">Filial</label>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Filial</label>
               <Select value={filialFiltro} onValueChange={setFilialFiltro}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
+                  <SelectValue placeholder="Selecione uma filial" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todas">Todas as Filiais</SelectItem>
-                  <SelectItem value="blumenau">Blumenau</SelectItem>
-                  <SelectItem value="curitiba">Curitiba</SelectItem>
-                  <SelectItem value="sp">São Paulo</SelectItem>
+                  {integracoes.map((integracao) => (
+                    <SelectItem key={integracao.id} value={String(integracao.id)}>
+                      {integracao.nome} - {integracao.filial}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
-            <Button className="gap-2 bg-[#135670] hover:bg-[#135670]/90">
-              <Filter className="w-4 h-4" />
-              Filtrar
-            </Button>
-            <Button variant="outline" className="gap-2" onClick={exportarParaExcel}>
-              <Download className="w-4 h-4" />
-              Exportar Excel
-            </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Resumo Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border-0 shadow-lg bg-card">
+      {/* Cards de Resumo */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="border-0 shadow-lg">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Faturamento Total</p>
-                <p className="text-3xl font-bold text-foreground mt-1">{formatarValor(faturamentoTotal)}</p>
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-xl">
+                <TrendingUp className="w-6 h-6 text-green-600" />
               </div>
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-white" />
+              <div>
+                <p className="text-sm text-muted-foreground">Total Vendas</p>
+                {isLoading ? (
+                  <div className="h-8 w-24 bg-muted animate-pulse rounded mt-1" />
+                ) : (
+                  <p className="text-2xl font-bold text-foreground">{formatarValor(totalGeral)}</p>
+                )}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-lg bg-card">
+        <Card className="border-0 shadow-lg">
           <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Vendas Filiais</p>
-                <p className="text-3xl font-bold text-foreground mt-1">{formatarValor(totalGeral)}</p>
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-xl">
+                <TrendingUp className="w-6 h-6 text-orange-600" />
               </div>
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#135670] to-[#1a7a9e] flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-white" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-0 shadow-lg bg-card">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Trading</p>
-                <p className="text-3xl font-bold text-foreground mt-1">{formatarValor(totalTrading)}</p>
+                {isLoading ? (
+                  <div className="h-8 w-24 bg-muted animate-pulse rounded mt-1" />
+                ) : (
+                  <p className="text-2xl font-bold text-foreground">{formatarValor(totalTrading)}</p>
+                )}
               </div>
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#ff5c00] to-orange-600 flex items-center justify-center">
-                <Users className="w-6 h-6 text-white" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-lg">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
+                <FileText className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Pedidos</p>
+                {isLoading ? (
+                  <div className="h-8 w-16 bg-muted animate-pulse rounded mt-1" />
+                ) : (
+                  <p className="text-2xl font-bold text-foreground">{resumo?.resumo.total_pedidos || 0}</p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-lg">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl">
+                <Users className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Clientes Ativos</p>
+                {isLoading ? (
+                  <div className="h-8 w-16 bg-muted animate-pulse rounded mt-1" />
+                ) : (
+                  <p className="text-2xl font-bold text-foreground">{resumo?.resumo.total_clientes || 0}</p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -486,323 +354,253 @@ export default function Relatorios() {
       </div>
 
       {/* Tabs de Relatórios */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="bg-card shadow-sm border">
-          <TabsTrigger value="consolidado" className="data-[state=active]:bg-[#135670] data-[state=active]:text-white">
-            Consolidado por Filial
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="bg-card shadow-sm border p-1">
+          <TabsTrigger 
+            value="consolidado" 
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+          >
+            Vendas Consolidado
           </TabsTrigger>
-          <TabsTrigger value="detalhado" className="data-[state=active]:bg-[#135670] data-[state=active]:text-white">
-            Detalhado por Vendedor
+          <TabsTrigger 
+            value="trading"
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+          >
+            Trading
+          </TabsTrigger>
+          <TabsTrigger 
+            value="clientes"
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+          >
+            Clientes
           </TabsTrigger>
         </TabsList>
 
-        {/* Relatório Consolidado */}
-        <TabsContent value="consolidado" className="mt-6">
-          <Card className="border-0 shadow-lg bg-card">
+        {/* Tab Consolidado */}
+        <TabsContent value="consolidado" className="space-y-6">
+          <Card className="border-0 shadow-lg">
             <CardHeader className="border-b bg-muted/30">
-              <CardTitle className="flex items-center gap-2">
-                <Building2 className="w-5 h-5 text-[#135670]" />
-                Faturamento Consolidado por Filial
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-[#135670] hover:bg-[#135670]">
-                      <TableHead className="text-white font-bold">Filial</TableHead>
-                      <TableHead className="text-white font-bold text-right">05/Jan</TableHead>
-                      <TableHead className="text-white font-bold text-right">Total</TableHead>
-                      <TableHead className="text-white font-bold text-center">Diário</TableHead>
-                      <TableHead className="text-white font-bold text-center">Parcial Mês</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {dadosConsolidado.map((estado, idx) => (
-                      <React.Fragment key={idx}>
-                        {/* Estado Header */}
-                        <TableRow className="bg-slate-700 hover:bg-slate-700">
-                          <TableCell colSpan={5} className="font-bold text-white py-2">
-                            {estado.estado}
-                          </TableCell>
-                        </TableRow>
-                        
-                        {/* Filiais */}
-                        {estado.filiais.map((filial, fidx) => (
-                          <React.Fragment key={fidx}>
-                            {filial.vendedores.map((vendedor, vidx) => (
-                              <TableRow key={vidx} className="hover:bg-muted/50">
-                                <TableCell className="pl-8 text-foreground">
-                                  {vidx === 0 && <strong>{filial.nome}</strong>}
-                                  {vidx > 0 && <span className="ml-4">{vendedor.nome}</span>}
-                                </TableCell>
-                                <TableCell className="text-right text-muted-foreground">
-                                  {formatarValor(vendedor.dia)}
-                                </TableCell>
-                                <TableCell className="text-right font-medium text-foreground">
-                                  {formatarValor(vendedor.total)}
-                                </TableCell>
-                                <TableCell className="text-center text-muted-foreground">
-                                  {formatarValor(vendedor.diario)}
-                                </TableCell>
-                                <TableCell className="text-center text-muted-foreground">
-                                  {formatarValor(vendedor.parcialMes)}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                            
-                            {/* Total Filial */}
-                            <TableRow className="bg-[#1a5872] hover:bg-[#1a5872]">
-                              <TableCell className="font-bold text-white">
-                                Total {filial.nome}
-                              </TableCell>
-                              <TableCell className="text-right font-bold text-white">
-                                {formatarValor(filial.total)}
-                              </TableCell>
-                              <TableCell className="text-right font-bold text-white">
-                                {formatarValor(filial.total)}
-                              </TableCell>
-                              <TableCell className="text-center font-bold text-white">
-                                R$ 0,00
-                              </TableCell>
-                              <TableCell className="text-center font-bold text-white">
-                                R$ 0,00
-                              </TableCell>
-                            </TableRow>
-                          </React.Fragment>
-                        ))}
-
-                        {/* Total Estado */}
-                        <TableRow className="bg-[#0f4254] hover:bg-[#0f4254]">
-                          <TableCell className="font-bold text-white text-lg">
-                            Total Consolidado {estado.estado}
-                          </TableCell>
-                          <TableCell className="text-right font-bold text-white text-lg">
-                            {formatarValor(estado.totalEstado)}
-                          </TableCell>
-                          <TableCell className="text-right font-bold text-white text-lg">
-                            {formatarValor(estado.totalEstado)}
-                          </TableCell>
-                          <TableCell className="text-center font-bold text-white">
-                            R$ 0,00
-                          </TableCell>
-                          <TableCell className="text-center font-bold text-white">
-                            R$ 0,00
-                          </TableCell>
-                        </TableRow>
-                      </React.Fragment>
-                    ))}
-
-                    {/* Total Filiais */}
-                    <TableRow className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-600 hover:to-emerald-700">
-                      <TableCell className="font-bold text-white text-xl">
-                        Total Consolidado Filiais
-                      </TableCell>
-                      <TableCell className="text-right font-bold text-white text-xl">
-                        {formatarValor(totalGeral)}
-                      </TableCell>
-                      <TableCell className="text-right font-bold text-white text-xl">
-                        {formatarValor(totalGeral)}
-                      </TableCell>
-                      <TableCell className="text-center font-bold text-white">
-                        R$ 0,00
-                      </TableCell>
-                      <TableCell className="text-center font-bold text-white">
-                        R$ 0,00
-                      </TableCell>
-                    </TableRow>
-
-                    {/* Trading */}
-                    <TableRow className="bg-red-800 hover:bg-red-800">
-                      <TableCell colSpan={5} className="font-bold text-white text-center py-3">
-                        VENDAS DIRETAS TRADING (DISTRIBUIÇÃO)
-                      </TableCell>
-                    </TableRow>
-
-                    {dadosTrading.map((item, idx) => (
-                      <TableRow key={idx} className="hover:bg-muted/50">
-                        <TableCell className="pl-8 text-foreground">{item.distribuidor}</TableCell>
-                        <TableCell className="text-right text-muted-foreground">
-                          {formatarValor(item.dia)}
-                        </TableCell>
-                        <TableCell className="text-right font-medium text-foreground">
-                          {formatarValor(item.total)}
-                        </TableCell>
-                        <TableCell className="text-center text-muted-foreground">R$ 0,00</TableCell>
-                        <TableCell className="text-center text-muted-foreground">R$ 0,00</TableCell>
-                      </TableRow>
-                    ))}
-
-                    {/* Total Trading */}
-                    <TableRow className="bg-[#ff5c00] hover:bg-[#ff5c00]">
-                      <TableCell className="font-bold text-white text-xl">
-                        RESULTADO TRADING (DISTRIBUIÇÃO)
-                      </TableCell>
-                      <TableCell className="text-right font-bold text-white text-xl">
-                        {formatarValor(totalTrading)}
-                      </TableCell>
-                      <TableCell className="text-right font-bold text-white text-xl">
-                        {formatarValor(totalTrading)}
-                      </TableCell>
-                      <TableCell className="text-center font-bold text-white">
-                        R$ 0,00
-                      </TableCell>
-                      <TableCell className="text-center font-bold text-white">
-                        R$ 0,00
-                      </TableCell>
-                    </TableRow>
-
-                    {/* Faturamento Total */}
-                    <TableRow className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-800 hover:to-slate-900">
-                      <TableCell className="font-bold text-white text-2xl py-4">
-                        Faturamento do dia:
-                      </TableCell>
-                      <TableCell className="text-right font-bold text-white text-2xl">
-                        {formatarValor(faturamentoTotal)}
-                      </TableCell>
-                      <TableCell className="text-right font-bold text-white text-2xl">
-                        {formatarValor(faturamentoTotal)}
-                      </TableCell>
-                      <TableCell className="text-center font-bold text-white">
-                        R$ 0,00
-                      </TableCell>
-                      <TableCell className="text-center font-bold text-white">
-                        R$ 0,00
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="w-5 h-5" />
+                  Vendas por Estado e Filial
+                </CardTitle>
+                <Badge variant="outline" className="text-sm">
+                  {vendasConsolidado?.periodo.inicio} a {vendasConsolidado?.periodo.fim}
+                </Badge>
               </div>
+            </CardHeader>
+            <CardContent className="p-6">
+              {isLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-20 bg-muted animate-pulse rounded" />
+                  ))}
+                </div>
+              ) : vendasConsolidado && vendasConsolidado.estados && vendasConsolidado.estados.length > 0 ? (
+                <div className="space-y-6">
+                  {vendasConsolidado.estados.map((estado, idx) => (
+                    <div key={idx} className="border rounded-lg overflow-hidden">
+                      {/* Header do Estado */}
+                      <div className="bg-slate-700 text-white p-4">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-bold">{estado.estado}</h3>
+                          <span className="text-xl font-bold">{formatarValor(estado.total_estado)}</span>
+                        </div>
+                      </div>
+                      
+                      {/* Filiais do Estado */}
+                      <div className="divide-y">
+                        {estado.filiais.map((filial, fIdx) => (
+                          <div key={fIdx} className="p-4 bg-card hover:bg-muted/30 transition-colors">
+                            <div className="flex items-center justify-between mb-2">
+                              <div>
+                                <p className="font-semibold text-foreground">{filial.nome}</p>
+                                <p className="text-sm text-muted-foreground">{filial.filial}</p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-lg font-bold text-green-600">{formatarValor(filial.total_vendas)}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {filial.total_pedidos} pedidos • Ticket: {formatarValor(filial.ticket_medio)}
+                                </p>
+                              </div>
+                            </div>
+                            
+                            {/* Vendedores (se houver) */}
+                            {filial.vendedores && filial.vendedores.length > 0 && (
+                              <div className="mt-3 pl-4 space-y-1">
+                                {filial.vendedores.map((vendedor, vIdx) => (
+                                  <div key={vIdx} className="flex items-center justify-between text-sm">
+                                    <span className="text-muted-foreground">{vendedor.nome}</span>
+                                    <span className="font-medium">{formatarValor(vendedor.total || 0)}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* Total Geral */}
+                  <div className="bg-green-600 text-white p-6 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xl font-bold">Total Consolidado Filiais</h3>
+                      <span className="text-3xl font-bold">{formatarValor(totalGeral)}</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">Nenhuma venda encontrada no período selecionado</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Relatório Detalhado */}
-        <TabsContent value="detalhado" className="mt-6">
-          <Card className="border-0 shadow-lg bg-card">
+        {/* Tab Trading */}
+        <TabsContent value="trading" className="space-y-6">
+          <Card className="border-0 shadow-lg">
             <CardHeader className="border-b bg-muted/30">
               <CardTitle className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-[#ff5c00]" />
-                Acompanhamento Diário - Detalhado por Vendedor
+                <TrendingUp className="w-5 h-5" />
+                Vendas Trading / Distribuição
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-[#135670] hover:bg-[#135670]">
-                      <TableHead className="text-white font-bold">Filial</TableHead>
-                      <TableHead className="text-white font-bold">Vendedor</TableHead>
-                      <TableHead className="text-white font-bold text-right">05/Jan</TableHead>
-                      <TableHead className="text-white font-bold text-right">Total</TableHead>
-                      <TableHead className="text-white font-bold text-center" colSpan={2}>
-                        ATÉ6000 PRO
-                      </TableHead>
-                    </TableRow>
-                    <TableRow className="bg-[#1a5872] hover:bg-[#1a5872]">
-                      <TableHead className="text-white"></TableHead>
-                      <TableHead className="text-white"></TableHead>
-                      <TableHead className="text-white"></TableHead>
-                      <TableHead className="text-white"></TableHead>
-                      <TableHead className="text-white text-center">Diário</TableHead>
-                      <TableHead className="text-white text-center">Parcial Mês</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {dadosConsolidado.map((estado, idx) => (
-                      <React.Fragment key={idx}>
-                        {estado.filiais.map((filial, fidx) => (
-                          <React.Fragment key={fidx}>
-                            {filial.vendedores.map((vendedor, vidx) => (
-                              <TableRow key={vidx} className="hover:bg-muted/50">
-                                <TableCell className="font-medium text-foreground">
-                                  {vidx === 0 ? filial.nome : ''}
-                                </TableCell>
-                                <TableCell className="italic text-muted-foreground">
-                                  {vendedor.nome}
-                                </TableCell>
-                                <TableCell className="text-right text-foreground">
-                                  {formatarValor(vendedor.dia)}
-                                </TableCell>
-                                <TableCell className="text-right font-bold text-foreground">
-                                  {formatarValor(vendedor.total)}
-                                </TableCell>
-                                <TableCell className="text-center text-muted-foreground">
-                                  {formatarValor(vendedor.diario)}
-                                </TableCell>
-                                <TableCell className="text-center text-muted-foreground">
-                                  {formatarValor(vendedor.parcialMes)}
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                            
-                            {/* Subtotal Filial */}
-                            <TableRow className="bg-[#1a5872] hover:bg-[#1a5872]">
-                              <TableCell colSpan={2} className="font-bold text-white">
-                                Total: {filial.nome}
-                              </TableCell>
-                              <TableCell className="text-right font-bold text-white">
-                                {formatarValor(filial.total)}
-                              </TableCell>
-                              <TableCell className="text-right font-bold text-white">
-                                {formatarValor(filial.total)}
-                              </TableCell>
-                              <TableCell className="text-center font-bold text-white">
-                                R$ 0,00
-                              </TableCell>
-                              <TableCell className="text-center font-bold text-white">
-                                R$ 0,00
-                              </TableCell>
-                            </TableRow>
-                          </React.Fragment>
-                        ))}
+            <CardContent className="p-6">
+              {isLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-16 bg-muted animate-pulse rounded" />
+                  ))}
+                </div>
+              ) : vendasTrading && vendasTrading.distribuidores && vendasTrading.distribuidores.length > 0 ? (
+                <div className="space-y-4">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Distribuidor</TableHead>
+                        <TableHead className="text-right">Total Vendas</TableHead>
+                        <TableHead className="text-right">Pedidos</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {vendasTrading.distribuidores.map((item, idx) => (
+                        <TableRow key={idx}>
+                          <TableCell className="font-medium">{item.distribuidor}</TableCell>
+                          <TableCell className="text-right font-semibold text-green-600">
+                            {formatarValor(item.total_vendas)}
+                          </TableCell>
+                          <TableCell className="text-right">{item.total_pedidos}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  
+                  <div className="bg-orange-600 text-white p-6 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xl font-bold">Total Trading</h3>
+                      <span className="text-3xl font-bold">{formatarValor(totalTrading)}</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">Nenhuma venda de trading encontrada no período</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-                        {/* Total Estado */}
-                        <TableRow className="bg-[#0f4254] hover:bg-[#0f4254]">
-                          <TableCell colSpan={2} className="font-bold text-white text-lg">
-                            Total Consolidado {estado.estado}:
+        {/* Tab Clientes */}
+        <TabsContent value="clientes" className="space-y-6">
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="border-b bg-muted/30">
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Distribuição de Clientes por Filial
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              {loadingClientes ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-16 bg-muted animate-pulse rounded" />
+                  ))}
+                </div>
+              ) : clientesFilial && clientesFilial.filiais && clientesFilial.filiais.length > 0 ? (
+                <div className="space-y-4">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Filial</TableHead>
+                        <TableHead className="text-right">Total Clientes</TableHead>
+                        <TableHead className="text-right">Clientes Ativos</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {clientesFilial.filiais.map((filial, idx) => (
+                        <TableRow key={idx}>
+                          <TableCell className="font-medium">
+                            {filial.nome}
+                            <span className="text-sm text-muted-foreground ml-2">({filial.filial})</span>
                           </TableCell>
-                          <TableCell className="text-right font-bold text-white text-lg">
-                            {formatarValor(estado.totalEstado)}
+                          <TableCell className="text-right font-semibold">
+                            {filial.total_clientes.toLocaleString('pt-BR')}
                           </TableCell>
-                          <TableCell className="text-right font-bold text-white text-lg">
-                            {formatarValor(estado.totalEstado)}
-                          </TableCell>
-                          <TableCell className="text-center font-bold text-white">
-                            R$ 0,00
-                          </TableCell>
-                          <TableCell className="text-center font-bold text-white">
-                            R$ 0,00
+                          <TableCell className="text-right text-green-600 font-semibold">
+                            {filial.clientes_ativos.toLocaleString('pt-BR')}
                           </TableCell>
                         </TableRow>
-                      </React.Fragment>
-                    ))}
-
-                    {/* Total Consolidado Final */}
-                    <TableRow className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-600 hover:to-emerald-700">
-                      <TableCell colSpan={2} className="font-bold text-white text-xl">
-                        Total Consolidado Filias
-                      </TableCell>
-                      <TableCell className="text-right font-bold text-white text-xl">
-                        {formatarValor(totalGeral)}
-                      </TableCell>
-                      <TableCell className="text-right font-bold text-white text-xl">
-                        {formatarValor(totalGeral)}
-                      </TableCell>
-                      <TableCell className="text-center font-bold text-white">
-                        R$ 0,00
-                      </TableCell>
-                      <TableCell className="text-center font-bold text-white">
-                        R$ 0,00
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </div>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  
+                  <div className="bg-blue-600 text-white p-6 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xl font-bold">Total Geral de Clientes</h3>
+                      <span className="text-3xl font-bold">
+                        {clientesFilial.total_geral.toLocaleString('pt-BR')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">Nenhum cliente encontrado</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Faturamento Total */}
+      {!isLoading && faturamentoTotal > 0 && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-8 rounded-2xl shadow-2xl"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-lg text-slate-300 mb-1">Faturamento Total do Período</p>
+              <p className="text-sm text-slate-400">
+                {dataInicio} a {dataFim}
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-5xl font-bold">{formatarValor(faturamentoTotal)}</p>
+              <p className="text-sm text-slate-300 mt-2">
+                Filiais: {formatarValor(totalGeral)} + Trading: {formatarValor(totalTrading)}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }
