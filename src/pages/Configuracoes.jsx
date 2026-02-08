@@ -36,6 +36,15 @@ export default function Configuracoes() {
     perfil_id: '',
     ativo: true
   });
+  const [dialogPerfilAberto, setDialogPerfilAberto] = useState(false);
+  const [perfilEditando, setPerfilEditando] = useState(null);
+  const [perfilSelecionado, setPerfilSelecionado] = useState(null);
+  const [formPerfil, setFormPerfil] = useState({
+    nome: '',
+    descricao: '',
+    cor: '',
+    permissoes: []
+  });
 
   // Buscar usuários
   const { data: usuarios = [], isLoading: loadingUsuarios } = useQuery({
@@ -47,6 +56,19 @@ export default function Configuracoes() {
   const { data: perfis = [], isLoading: loadingPerfis } = useQuery({
     queryKey: ['perfis'],
     queryFn: api.perfis.list,
+  });
+
+  // Buscar permissões disponíveis
+  const { data: permissoesDisponiveis = [] } = useQuery({
+    queryKey: ['permissoes'],
+    queryFn: api.perfis.permissoes,
+  });
+
+  // Buscar detalhes do perfil selecionado
+  const { data: perfilDetalhes } = useQuery({
+    queryKey: ['perfil', perfilSelecionado],
+    queryFn: () => api.perfis.get(perfilSelecionado),
+    enabled: !!perfilSelecionado,
   });
 
   // Criar usuário
@@ -106,6 +128,47 @@ export default function Configuracoes() {
     },
   });
 
+  // Criar perfil
+  const criarPerfilMutation = useMutation({
+    mutationFn: api.perfis.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries(['perfis']);
+      setDialogPerfilAberto(false);
+      resetFormPerfil();
+      toast.success('Perfil criado com sucesso!');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Erro ao criar perfil');
+    },
+  });
+
+  // Atualizar perfil
+  const atualizarPerfilMutation = useMutation({
+    mutationFn: ({ id, data }) => api.perfis.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['perfis']);
+      queryClient.invalidateQueries(['perfil']);
+      setDialogPerfilAberto(false);
+      resetFormPerfil();
+      toast.success('Perfil atualizado com sucesso!');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Erro ao atualizar perfil');
+    },
+  });
+
+  // Deletar perfil
+  const deletarPerfilMutation = useMutation({
+    mutationFn: api.perfis.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries(['perfis']);
+      toast.success('Perfil deletado com sucesso!');
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Erro ao deletar perfil');
+    },
+  });
+
   const resetForm = () => {
     setFormData({
       nome: '',
@@ -115,6 +178,53 @@ export default function Configuracoes() {
       ativo: true
     });
     setUsuarioEditando(null);
+  };
+
+  const resetFormPerfil = () => {
+    setFormPerfil({
+      nome: '',
+      descricao: '',
+      cor: '',
+      permissoes: []
+    });
+    setPerfilEditando(null);
+  };
+
+  const handleSubmitPerfil = (e) => {
+    e.preventDefault();
+    
+    if (perfilEditando) {
+      atualizarPerfilMutation.mutate({ id: perfilEditando.id, data: formPerfil });
+    } else {
+      criarPerfilMutation.mutate(formPerfil);
+    }
+  };
+
+  const handleEditarPerfil = (perfil) => {
+    setPerfilEditando(perfil);
+    setPerfilSelecionado(perfil.id);
+    setFormPerfil({
+      nome: perfil.nome,
+      descricao: perfil.descricao || '',
+      cor: perfil.cor || '',
+      permissoes: perfilDetalhes?.permissoes?.map(p => p.permissao_id) || []
+    });
+    setDialogPerfilAberto(true);
+  };
+
+  const handleDeletarPerfil = (id) => {
+    if (confirm('Tem certeza que deseja deletar este perfil?')) {
+      deletarPerfilMutation.mutate(id);
+    }
+  };
+
+  const togglePermissao = (permissaoId) => {
+    setFormPerfil(prev => ({
+      ...prev,
+      permissoes: prev.permissoes.includes(permissaoId)
+        ? prev.permissoes.filter(id => id !== permissaoId)
+        : [...prev.permissoes, permissaoId]
+    }));
   };
 
   const handleSubmit = (e) => {
@@ -395,10 +505,95 @@ export default function Configuracoes() {
         <TabsContent value="perfis">
           <Card>
             <CardHeader>
-              <CardTitle>Perfis de Permissão</CardTitle>
-              <CardDescription>
-                Gerencie os perfis e suas permissões (em desenvolvimento)
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Perfis de Permissão</CardTitle>
+                  <CardDescription>
+                    Gerencie os perfis e suas permissões
+                  </CardDescription>
+                </div>
+                <Dialog open={dialogPerfilAberto} onOpenChange={setDialogPerfilAberto}>
+                  <DialogTrigger asChild>
+                    <Button onClick={() => { resetFormPerfil(); setDialogPerfilAberto(true); }} className="flex items-center gap-2">
+                      <Shield className="w-4 h-4" />
+                      Novo Perfil
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>
+                        {perfilEditando ? 'Editar Perfil' : 'Criar Novo Perfil'}
+                      </DialogTitle>
+                      <DialogDescription>
+                        {perfilEditando 
+                          ? 'Atualize as informações e permissões do perfil' 
+                          : 'Defina o nome e as permissões do novo perfil'}
+                      </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleSubmitPerfil} className="space-y-4">
+                      <div>
+                        <Label htmlFor="nome-perfil">Nome do Perfil</Label>
+                        <Input
+                          id="nome-perfil"
+                          value={formPerfil.nome}
+                          onChange={(e) => setFormPerfil({ ...formPerfil, nome: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="descricao-perfil">Descrição</Label>
+                        <Input
+                          id="descricao-perfil"
+                          value={formPerfil.descricao}
+                          onChange={(e) => setFormPerfil({ ...formPerfil, descricao: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <Label>Permissões</Label>
+                        <div className="mt-2 space-y-2 max-h-64 overflow-y-auto border rounded-lg p-4">
+                          {permissoesDisponiveis.map((permissao) => (
+                            <div key={permissao.id} className="flex items-center space-x-2">
+                              <Switch
+                                id={`perm-${permissao.id}`}
+                                checked={formPerfil.permissoes.includes(permissao.id)}
+                                onCheckedChange={() => togglePermissao(permissao.id)}
+                              />
+                              <Label htmlFor={`perm-${permissao.id}`} className="cursor-pointer">
+                                <span className="font-medium">{permissao.recurso}</span>
+                                <span className="text-slate-500"> - {permissao.acao}</span>
+                                {permissao.descricao && (
+                                  <p className="text-xs text-slate-400">{permissao.descricao}</p>
+                                )}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setDialogPerfilAberto(false);
+                            resetFormPerfil();
+                          }}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button
+                          type="submit"
+                          disabled={criarPerfilMutation.isPending || atualizarPerfilMutation.isPending}
+                        >
+                          {(criarPerfilMutation.isPending || atualizarPerfilMutation.isPending) && (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          )}
+                          {perfilEditando ? 'Salvar Alterações' : 'Criar Perfil'}
+                        </Button>
+                      </DialogFooter>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </CardHeader>
             <CardContent>
               {loadingPerfis ? (
@@ -408,18 +603,37 @@ export default function Configuracoes() {
               ) : (
                 <div className="grid gap-4">
                   {perfis.map((perfil) => (
-                    <div key={perfil.id} className="p-4 border rounded-lg">
+                    <div key={perfil.id} className="p-4 border rounded-lg hover:shadow-md transition-shadow">
                       <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-semibold">{perfil.nome}</h3>
-                          <p className="text-sm text-slate-500">{perfil.descricao}</p>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold">{perfil.nome}</h3>
+                            <Badge className={getPerfilColor(perfil.nome)}>
+                              {perfil.nome}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-slate-500 mt-1">{perfil.descricao}</p>
                           <p className="text-xs text-slate-400 mt-1">
                             {perfil.total_usuarios} usuário(s)
                           </p>
                         </div>
-                        <Badge className={getPerfilColor(perfil.nome)}>
-                          {perfil.nome}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditarPerfil(perfil)}
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeletarPerfil(perfil.id)}
+                            disabled={deletarPerfilMutation.isPending || perfil.total_usuarios > 0}
+                          >
+                            <Trash2 className="w-4 h-4 text-red-600" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
