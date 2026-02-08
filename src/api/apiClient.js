@@ -170,6 +170,55 @@ class ApiClient {
     }),
   };
 
+  // Usuários
+  usuarios = {
+    list: () => this.request('/usuarios'),
+    
+    get: (id) => this.request(`/usuarios/${id}`),
+    
+    create: (data) => this.request('/usuarios', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+    
+    update: (id, data) => this.request(`/usuarios/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+    
+    delete: (id) => this.request(`/usuarios/${id}`, {
+      method: 'DELETE',
+    }),
+    
+    convidar: (data) => this.request('/usuarios/convidar', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  };
+
+  // Perfis
+  perfis = {
+    list: () => this.request('/perfis'),
+    
+    get: (id) => this.request(`/perfis/${id}`),
+    
+    create: (data) => this.request('/perfis', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+    
+    update: (id, data) => this.request(`/perfis/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+    
+    delete: (id) => this.request(`/perfis/${id}`, {
+      method: 'DELETE',
+    }),
+    
+    permissoes: () => this.request('/perfis/sistema/permissoes'),
+  };
+
   // OMIE
   omie = {
     sync: (integracaoId, data) => this.request('/omie/sync', {
