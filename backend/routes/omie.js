@@ -23,20 +23,29 @@ router.post('/sync', async (req, res) => {
       });
     }
 
-    // Mapear tipo para o método da API OMIE
-    const callMap = {
-      'clientes': 'ListarClientes',
-      'produtos': 'ListarProdutos',
-      'pedidos': 'ListarPedidos'
+    // Mapear tipo para o método e endpoint da API OMIE
+    const apiConfig = {
+      'clientes': {
+        call: 'ListarClientes',
+        endpoint: 'geral/clientes/'
+      },
+      'produtos': {
+        call: 'ListarProdutos',
+        endpoint: 'geral/produtos/'
+      },
+      'pedidos': {
+        call: 'ListarPedidos',
+        endpoint: 'produtos/pedido/'
+      }
     };
 
-    const call = callMap[tipo];
+    const config = apiConfig[tipo];
 
-    console.log(`[OMIE] Sincronizando ${tipo} com método ${call}`);
+    console.log(`[OMIE] Sincronizando ${tipo} com método ${config.call}`);
 
     // Preparar requisição para API OMIE
     const requestBody = {
-      call: call,
+      call: config.call,
       app_key: api_key,
       app_secret: app_secret,
       param: [
@@ -49,7 +58,7 @@ router.post('/sync', async (req, res) => {
     };
 
     // Fazer requisição para API da OMIE
-    const response = await axios.post(api_url + 'geral/clientes/', requestBody, {
+    const response = await axios.post(api_url + config.endpoint, requestBody, {
       headers: {
         'Content-Type': 'application/json'
       },
