@@ -43,32 +43,63 @@ router.post('/sync', async (req, res) => {
 
     console.log(`[OMIE] Sincronizando ${tipo} com método ${config.call}`);
 
-    // Preparar requisição para API OMIE
-    const requestBody = {
-      call: config.call,
-      app_key: api_key,
-      app_secret: app_secret,
-      param: [
-        {
-          pagina: 1,
-          registros_por_pagina: 100,
-          apenas_importado_api: 'N'
-        }
-      ]
+    // Função para fazer requisição com delay (rate limit)
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    const fetchPage = async (pagina) => {
+      const requestBody = {
+        call: config.call,
+        app_key: api_key,
+        app_secret: app_secret,
+        param: [
+          {
+            pagina: pagina,
+            registros_por_pagina: 100,
+            apenas_importado_api: 'N'
+          }
+        ]
+      };
+
+      const response = await axios.post(api_url + config.endpoint, requestBody, {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        timeout: 30000
+      });
+
+      return response.data;
     };
 
-    // Fazer requisição para API da OMIE
-    const response = await axios.post(api_url + config.endpoint, requestBody, {
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      timeout: 30000 // 30 segundos
-    });
+    // Buscar primeira página para saber total de páginas
+    console.log(`[OMIE] Buscando página 1...`);
+    const primeiraResposta = await fetchPage(1);
+    
+    let todosRegistros = primeiraResposta.clientes_cadastro || primeiraResposta.produto_servico_cadastro || primeiraResposta.pedido_venda_produto || [];
+    const totalPaginas = primeiraResposta.total_de_paginas || 1;
+    const totalRegistros = primeiraResposta.total_de_registros || todosRegistros.length;
 
-    const data = response.data;
-    const registros = data.clientes_cadastro || data.produto_servico_cadastro || data.pedido_venda_produto || [];
+    console.log(`[OMIE] Total de registros: ${totalRegistros}, Total de páginas: ${totalPaginas}`);
 
-    console.log(`[OMIE] Sucesso: ${registros.length} ${tipo} obtidos`);
+    // Buscar demais páginas com delay de 300ms entre cada requisição (respeita rate limit)
+    for (let pagina = 2; pagina <= totalPaginas; pagina++) {
+      await sleep(300); // Delay de 300ms = ~3 requisições por segundo (bem abaixo do limite de 4/s)
+      
+      console.log(`[OMIE] Buscando página ${pagina}/${totalPaginas}...`);
+      
+      try {
+        const resposta = await fetchPage(pagina);
+        const registrosPagina = resposta.clientes_cadastro || resposta.produto_servico_cadastro || resposta.pedido_venda_produto || [];
+        todosRegistros = todosRegistros.concat(registrosPagina);
+        
+        console.log(`[OMIE] Página ${pagina}: ${registrosPagina.length} registros obtidos. Total acumulado: ${todosRegistros.length}`);
+      } catch (pageError) {
+        console.error(`[OMIE] Erro na página ${pagina}:`, pageError.message);
+        // Continua mesmo se uma página falhar
+      }
+    }
+
+    const registros = todosRegistros;
+    console.log(`[OMIE] Sincronização completa: ${registros.length} ${tipo} obtidos no total`);
 
     // Salvar dados no banco (se tiver integracaoId)
     if (req.body.integracaoId) {
