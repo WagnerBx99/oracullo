@@ -73,6 +73,53 @@ router.post('/sync', async (req, res) => {
     // Salvar dados no banco (se tiver integracaoId)
     if (req.body.integracaoId) {
       try {
+        // Salvar registros nas tabelas
+        for (const registro of registros) {
+          if (tipo === 'clientes') {
+            await query(
+              `INSERT INTO clientes (integracao_id, external_id, nome, email, telefone, cpf_cnpj, endereco, cidade, estado, cep, data_json)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+               ON CONFLICT (integracao_id, external_id) 
+               DO UPDATE SET nome = $3, email = $4, telefone = $5, cpf_cnpj = $6, endereco = $7, cidade = $8, estado = $9, cep = $10, data_json = $11, updated_at = CURRENT_TIMESTAMP`,
+              [
+                req.body.integracaoId,
+                registro.codigo_cliente_omie || registro.codigo_cliente,
+                registro.razao_social || registro.nome_fantasia,
+                registro.email,
+                registro.telefone1_numero,
+                registro.cnpj_cpf,
+                registro.endereco,
+                registro.cidade,
+                registro.estado,
+                registro.cep,
+                JSON.stringify(registro)
+              ]
+            );
+          } else if (tipo === 'produtos') {
+            await query(
+              `INSERT INTO produtos (integracao_id, external_id, codigo, nome, descricao, preco, estoque, unidade, categoria, ativo, data_json)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+               ON CONFLICT (integracao_id, external_id)
+               DO UPDATE SET codigo = $3, nome = $4, descricao = $5, preco = $6, estoque = $7, unidade = $8, categoria = $9, ativo = $10, data_json = $11, updated_at = CURRENT_TIMESTAMP`,
+              [
+                req.body.integracaoId,
+                registro.codigo_produto,
+                registro.codigo,
+                registro.descricao,
+                registro.descricao_detalhada,
+                registro.valor_unitario,
+                registro.quantidade_estoque,
+                registro.unidade,
+                registro.nome_familia,
+                registro.inativo === 'N',
+                JSON.stringify(registro)
+              ]
+            );
+          }
+        }
+
+        console.log(`[OMIE] ${registros.length} ${tipo} salvos no banco`);
+
         // Atualizar status da integração
         await Integracao.update(req.body.integracaoId, {
           status: 'conectado',
