@@ -169,6 +169,19 @@ class ApiClient {
       body: JSON.stringify(data),
     }),
   };
+
+  // OMIE
+  omie = {
+    sync: (integracaoId, data) => this.request('/omie/sync', {
+      method: 'POST',
+      body: JSON.stringify({ ...data, integracaoId }),
+    }),
+    
+    test: (data) => this.request('/omie/test', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+  };
 }
 
 export const api = new ApiClient();

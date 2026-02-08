@@ -99,6 +99,32 @@ export default function Integracoes() {
           totalProdutos: produtosResult.total || 0
         };
       }
+      
+      if (integracao.sistema === 'omie') {
+        // Sincroniza clientes
+        const clientesResult = await api.omie.sync(integracao.id, {
+          api_url: integracao.api_url,
+          api_key: integracao.api_key,
+          app_secret: integracao.company_token,
+          tipo: 'clientes'
+        });
+        
+        // Sincroniza produtos
+        const produtosResult = await api.omie.sync(integracao.id, {
+          api_url: integracao.api_url,
+          api_key: integracao.api_key,
+          app_secret: integracao.company_token,
+          tipo: 'produtos'
+        });
+        
+        return { 
+          clientes: clientesResult.data || [],
+          produtos: produtosResult.data || [],
+          totalClientes: clientesResult.total || 0,
+          totalProdutos: produtosResult.total || 0
+        };
+      }
+      
       throw new Error('Sistema não suportado ainda');
     },
     onSuccess: (data, integracao) => {

@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import mercosRoutes from './routes/mercos.js';
+import omieRoutes from './routes/omie.js';
 import integracoesRoutes from './routes/integracoes.js';
 import authRoutes from './routes/auth.js';
 import { authenticate } from './middleware/auth.js';
@@ -24,6 +25,7 @@ app.use('/api/auth', authRoutes);
 // Rotas protegidas (requerem autenticação)
 app.use('/api/integracoes', authenticate, integracoesRoutes);
 app.use('/api/mercos', authenticate, mercosRoutes);
+app.use('/api/omie', authenticate, omieRoutes);
 
 // Rota de health check
 app.get('/health', (req, res) => {
