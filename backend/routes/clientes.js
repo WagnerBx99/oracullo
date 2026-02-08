@@ -1,5 +1,5 @@
 import express from 'express';
-import { dbAnalitico, dbTransacional } from '../config/databases.js';
+import { poolAnalitico, poolTransacional } from '../config/databases.js';
 
 const router = express.Router();
 
@@ -38,7 +38,7 @@ router.get('/unificados', async (req, res) => {
     query += ` ORDER BY nome LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     params.push(limit, offset);
 
-    const result = await dbAnalitico.query(query, params);
+    const result = await poolAnalitico.query(query, params);
 
     // Contar total
     let countQuery = 'SELECT COUNT(*) FROM clientes_unificados';
@@ -49,7 +49,7 @@ router.get('/unificados', async (req, res) => {
       countParams.push(`%${search}%`);
     }
 
-    const countResult = await dbAnalitico.query(countQuery, countParams);
+    const countResult = await poolAnalitico.query(countQuery, countParams);
     const total = parseInt(countResult.rows[0].count);
 
     res.json({
@@ -77,7 +77,7 @@ router.get('/unificados', async (req, res) => {
  */
 router.get('/unificados/stats', async (req, res) => {
   try {
-    const stats = await dbAnalitico.query(`
+    const stats = await poolAnalitico.query(`
       SELECT 
         COUNT(*) as total_clientes_unificados,
         COUNT(*) FILTER (WHERE total_filiais > 1) as clientes_em_multiplas_filiais,
@@ -86,7 +86,7 @@ router.get('/unificados/stats', async (req, res) => {
       FROM clientes_unificados
     `);
 
-    const transacionalCount = await dbTransacional.query('SELECT COUNT(*) FROM clientes');
+    const transacionalCount = await poolTransacional.query('SELECT COUNT(*) FROM clientes');
 
     res.json({
       success: true,
@@ -114,7 +114,7 @@ router.post('/unificar', async (req, res) => {
     console.log('[CLIENTES] Iniciando unificação de clientes...');
 
     // Executar função de unificação
-    const result = await dbAnalitico.query('SELECT * FROM unificar_clientes()');
+    const result = await poolAnalitico.query('SELECT * FROM unificar_clientes()');
     
     const stats = result.rows[0];
 
@@ -147,7 +147,7 @@ router.get('/unificados/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const result = await dbAnalitico.query(`
+    const result = await poolAnalitico.query(`
       SELECT 
         id,
         cpf_cnpj,
@@ -177,7 +177,7 @@ router.get('/unificados/:id', async (req, res) => {
 
     // Buscar registros originais por filial
     const cliente = result.rows[0];
-    const registrosPorFilial = await dbTransacional.query(`
+    const registrosPorFilial = await poolTransacional.query(`
       SELECT 
         c.id,
         c.integracao_id,
