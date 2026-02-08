@@ -7,6 +7,7 @@ import omieRoutes from './routes/omie.js';
 import usuariosRoutes from './routes/usuarios.js';
 import perfisRoutes from './routes/perfis.js';
 import integracoesRoutes from './routes/integracoes.js';
+import clientesRoutes from './routes/clientes.js';
 import authRoutes from './routes/auth.js';
 import { authenticate } from './middleware/auth.js';
 import pool from './database/db.js';
@@ -30,6 +31,7 @@ app.use('/api/mercos', authenticate, mercosRoutes);
 app.use('/api/omie', authenticate, omieRoutes);
 app.use('/api/usuarios', authenticate, usuariosRoutes);
 app.use('/api/perfis', authenticate, perfisRoutes);
+app.use('/api/clientes', authenticate, clientesRoutes);
 
 // Rota de health check
 app.get('/health', (req, res) => {
