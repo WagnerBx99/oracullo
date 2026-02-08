@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const { poolGestao } = require('../config/databases');
-const bcrypt = require('bcrypt');
+import { poolGestao } from '../config/databases.js';
+import bcrypt from 'bcrypt';
 
 // GET /api/usuarios - Listar todos os usuários
 router.get('/', async (req, res) => {
@@ -273,4 +273,4 @@ router.post('/convidar', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

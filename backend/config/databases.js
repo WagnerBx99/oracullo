@@ -1,4 +1,5 @@
-const { Pool } = require('pg');
+import pkg from 'pg';
+const { Pool } = pkg;
 
 // Configuração do DB Gestão (usuários, perfis, permissões, integrações)
 const poolGestao = new Pool({
@@ -73,11 +74,12 @@ async function testConnections() {
   }
 }
 
-module.exports = {
+export {
   poolGestao,
   poolTransacional,
   poolAnalitico,
   testConnections,
-  // Manter pool padrão para compatibilidade com código antigo
-  pool: poolGestao,
 };
+
+// Manter pool padrão para compatibilidade com código antigo
+export default poolGestao;

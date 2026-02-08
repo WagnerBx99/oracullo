@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import mercosRoutes from './routes/mercos.js';
 import omieRoutes from './routes/omie.js';
+import usuariosRoutes from './routes/usuarios.js';
+import perfisRoutes from './routes/perfis.js';
 import integracoesRoutes from './routes/integracoes.js';
 import authRoutes from './routes/auth.js';
 import { authenticate } from './middleware/auth.js';
@@ -26,6 +28,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/integracoes', authenticate, integracoesRoutes);
 app.use('/api/mercos', authenticate, mercosRoutes);
 app.use('/api/omie', authenticate, omieRoutes);
+app.use('/api/usuarios', authenticate, usuariosRoutes);
+app.use('/api/perfis', authenticate, perfisRoutes);
 
 // Rota de health check
 app.get('/health', (req, res) => {
