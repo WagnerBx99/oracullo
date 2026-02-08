@@ -236,6 +236,18 @@ export default function Integracoes() {
                   <p className="text-xs text-slate-500">Token específico da empresa no MERCOS</p>
                 </div>
               )}
+              {formData.sistema === 'omie' && (
+                <div className="space-y-2">
+                  <Label>App Secret (OMIE)</Label>
+                  <Input
+                    type="password"
+                    value={formData.company_token}
+                    onChange={(e) => setFormData({ ...formData, company_token: e.target.value })}
+                    placeholder="••••••••"
+                  />
+                  <p className="text-xs text-slate-500">App Secret fornecido pela OMIE</p>
+                </div>
+              )}
               <Button 
                 className="w-full bg-blue-600 hover:bg-blue-700"
                 onClick={handleSubmit}
