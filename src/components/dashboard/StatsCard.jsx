@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 
-export default function StatsCard({ title, value, subtitle, icon: Icon, color = "blue", trend }) {
+export default function StatsCard({ title, value, subtitle, icon: Icon, color = "blue", trend, isLoading }) {
   const colorClasses = {
     blue: "from-[#135670] to-[#1a7a9e]",
     green: "from-emerald-500 to-emerald-600",
@@ -26,7 +26,11 @@ export default function StatsCard({ title, value, subtitle, icon: Icon, color = 
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">{title}</p>
-                  <p className="text-3xl font-bold text-foreground mt-1">{value}</p>
+                  {isLoading ? (
+                    <div className="h-10 w-24 bg-muted animate-pulse rounded mt-1" />
+                  ) : (
+                    <p className="text-3xl font-bold text-foreground mt-1">{value}</p>
+                  )}
                   {subtitle && (
                     <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
                   )}

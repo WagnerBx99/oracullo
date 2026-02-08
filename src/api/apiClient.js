@@ -231,6 +231,82 @@ class ApiClient {
       body: JSON.stringify(data),
     }),
   };
+
+  // Dashboard
+  dashboard = {
+    kpis: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/dashboard/kpis${query ? '?' + query : ''}`);
+    },
+    
+    vendasPorFilial: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/dashboard/vendas-por-filial${query ? '?' + query : ''}`);
+    },
+    
+    stats: () => this.request('/dashboard/stats'),
+    
+    vendasTimeline: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/dashboard/vendas-timeline${query ? '?' + query : ''}`);
+    },
+    
+    topClientes: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/dashboard/top-clientes${query ? '?' + query : ''}`);
+    },
+  };
+
+  // Relatórios
+  relatorios = {
+    vendasConsolidado: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/relatorios/vendas-consolidado${query ? '?' + query : ''}`);
+    },
+    
+    vendasTrading: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/relatorios/vendas-trading${query ? '?' + query : ''}`);
+    },
+    
+    vendasPorVendedor: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/relatorios/vendas-por-vendedor${query ? '?' + query : ''}`);
+    },
+    
+    clientesPorFilial: () => this.request('/relatorios/clientes-por-filial'),
+    
+    produtosMaisVendidos: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/relatorios/produtos-mais-vendidos${query ? '?' + query : ''}`);
+    },
+    
+    resumoGeral: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/relatorios/resumo-geral${query ? '?' + query : ''}`);
+    },
+  };
+
+  // Clientes
+  clientes = {
+    list: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/clientes${query ? '?' + query : ''}`);
+    },
+    
+    unificados: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/clientes/unificados${query ? '?' + query : ''}`);
+    },
+    
+    stats: () => this.request('/clientes/unificados/stats'),
+    
+    unificar: () => this.request('/clientes/unificar', {
+      method: 'POST',
+    }),
+    
+    detalhes: (id) => this.request(`/clientes/unificados/${id}`),
+  };
 }
 
 export const api = new ApiClient();
