@@ -178,12 +178,12 @@ router.post('/sync', async (req, res) => {
                  DO UPDATE SET numero_pedido = $3, data_pedido = $4, valor_total = $5, status = $6, observacoes = $7, data_json = $8, updated_at = CURRENT_TIMESTAMP`,
                 [
                   req.body.integracaoId,
-                  registro.codigo_pedido || registro.numero_pedido,
-                  registro.numero_pedido,
-                  registro.data_previsao || registro.data_pedido,
-                  registro.total_pedido || registro.valor_total_pedido,
-                  registro.etapa || registro.status_pedido || 'pendente',
-                  registro.observacoes || registro.obs,
+                  registro.cabecalho.codigo_pedido,
+                  registro.cabecalho.numero_pedido,
+                  registro.cabecalho.data_previsao,
+                  registro.total_pedido?.valor_total_pedido || 0,
+                  registro.cabecalho.etapa || 'pendente',
+                  registro.observacoes?.obs_venda || '',
                   JSON.stringify(registro)
                 ]
               );
