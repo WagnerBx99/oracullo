@@ -1,7 +1,7 @@
 import express from 'express';
 import axios from 'axios';
 import { Integracao } from '../models/Integracao.js';
-import { query } from '../database/db.js';
+import { poolGestao, poolTransacional } from '../config/databases.js';
 
 const router = express.Router();
 
@@ -113,7 +113,7 @@ router.post('/sync', async (req, res) => {
           const registro = registros[i];
           try {
             if (tipo === 'clientes') {
-              await query(
+              await poolTransacional.query(
                 `INSERT INTO clientes (integracao_id, external_id, nome, email, telefone, cpf_cnpj, endereco, cidade, estado, cep, data_json)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
                  ON CONFLICT (integracao_id, external_id) 
@@ -134,7 +134,7 @@ router.post('/sync', async (req, res) => {
               );
               salvosComSucesso++;
             } else if (tipo === 'produtos') {
-              await query(
+              await poolTransacional.query(
                 `INSERT INTO produtos (integracao_id, external_id, codigo, nome, descricao, preco, estoque, unidade, categoria, ativo, data_json)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
                  ON CONFLICT (integracao_id, external_id)
@@ -176,10 +176,10 @@ router.post('/sync', async (req, res) => {
         });
 
         // Registrar log de sincronização
-        await query(
+        await poolGestao.query(
           `INSERT INTO logs_sincronizacao (integracao_id, tipo, status, total_registros, mensagem)
            VALUES ($1, $2, $3, $4, $5)`,
-          [req.body.integracaoId, tipo, 'sucesso', registros.length, `Sincronização de ${tipo} concluída com sucesso`]
+          [req.body.integracaoId, tipo, 'sucesso', salvosComSucesso, `Sincronização de ${tipo} concluída com sucesso`]
         );
       } catch (dbError) {
         console.error('[OMIE] Erro ao salvar no banco:', dbError.message);
