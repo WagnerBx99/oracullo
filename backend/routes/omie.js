@@ -47,18 +47,22 @@ router.post('/sync', async (req, res) => {
     const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
     const fetchPage = async (pagina) => {
+      const params = {
+        pagina: pagina,
+        registros_por_pagina: 100,
+        apenas_importado_api: 'N'
+      };
+      
+      // filtrar_apenas_omiepdv só existe para produtos
+      if (tipo === 'produtos') {
+        params.filtrar_apenas_omiepdv = 'N';
+      }
+      
       const requestBody = {
         call: config.call,
         app_key: api_key,
         app_secret: app_secret,
-        param: [
-          {
-            pagina: pagina,
-            registros_por_pagina: 100,
-            apenas_importado_api: 'N',
-            filtrar_apenas_omiepdv: 'N'
-          }
-        ]
+        param: [params]
       };
 
       const response = await axios.post(api_url + config.endpoint, requestBody, {
