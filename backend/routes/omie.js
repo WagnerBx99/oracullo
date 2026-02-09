@@ -5,6 +5,14 @@ import { poolGestao, poolTransacional } from '../config/databases.js';
 
 const router = express.Router();
 
+// Função para converter data DD/MM/YYYY para YYYY-MM-DD
+const convertDateFormat = (dateStr) => {
+  if (!dateStr || dateStr === '') return null;
+  const parts = dateStr.split('/');
+  if (parts.length !== 3) return null;
+  return `${parts[2]}-${parts[1]}-${parts[0]}`; // YYYY-MM-DD
+};
+
 // Endpoint para sincronizar dados da OMIE
 router.post('/sync', async (req, res) => {
   try {
@@ -180,7 +188,7 @@ router.post('/sync', async (req, res) => {
                   req.body.integracaoId,
                   registro.cabecalho.codigo_pedido,
                   registro.cabecalho.numero_pedido,
-                  registro.cabecalho.data_previsao,
+                  convertDateFormat(registro.cabecalho.data_previsao),
                   registro.total_pedido?.valor_total_pedido || 0,
                   registro.cabecalho.etapa || 'pendente',
                   registro.observacoes?.obs_venda || '',
