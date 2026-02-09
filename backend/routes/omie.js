@@ -154,25 +154,6 @@ router.post('/sync', async (req, res) => {
                 ]
               );
               salvosComSucesso++;
-            } else if (tipo === 'pedidos') {
-              // Inserir pedido
-              const pedidoResult = await query(
-                `INSERT INTO pedidos (integracao_id, external_id, numero_pedido, data_pedido, valor_total, status, cliente_id, data_json)
-                 VALUES ($1, $2, $3, $4, $5, $6, NULL, $7)
-                 ON CONFLICT (integracao_id, external_id)
-                 DO UPDATE SET numero_pedido = $3, data_pedido = $4, valor_total = $5, status = $6, data_json = $7, updated_at = CURRENT_TIMESTAMP
-                 RETURNING id`,
-                [
-                  req.body.integracaoId,
-                  registro.codigo_pedido,
-                  registro.numero_pedido,
-                  registro.data_previsao,
-                  registro.total_pedido?.valor_total_pedido || 0,
-                  registro.infoCadastro?.faturado === 'S' ? 'faturado' : 'pendente',
-                  JSON.stringify(registro)
-                ]
-              );
-              salvosComSucesso++;
             }
             
             // Log a cada 100 registros
