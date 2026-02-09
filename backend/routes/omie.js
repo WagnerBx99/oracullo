@@ -121,7 +121,7 @@ router.post('/sync', async (req, res) => {
                 [
                   req.body.integracaoId,
                   registro.codigo_cliente_omie || registro.codigo_cliente,
-                  registro.razao_social || registro.nome_fantasia,
+                  registro.razao_social || registro.nome_fantasia || registro.cnpj_cpf || 'Cliente sem nome',
                   registro.email,
                   registro.telefone1_numero,
                   registro.cnpj_cpf,
@@ -143,7 +143,7 @@ router.post('/sync', async (req, res) => {
                   req.body.integracaoId,
                   registro.codigo_produto,
                   registro.codigo,
-                  registro.descricao,
+                  registro.descricao || registro.codigo || 'Produto sem nome',
                   registro.descricao_detalhada,
                   registro.valor_unitario,
                   registro.quantidade_estoque,
