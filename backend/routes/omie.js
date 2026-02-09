@@ -55,7 +55,8 @@ router.post('/sync', async (req, res) => {
           {
             pagina: pagina,
             registros_por_pagina: 100,
-            apenas_importado_api: 'N'
+            apenas_importado_api: 'N',
+            filtrar_apenas_omiepdv: 'N'
           }
         ]
       };
