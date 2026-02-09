@@ -12,7 +12,7 @@ import dashboardRoutes from './routes/dashboard.js';
 import relatoriosRoutes from './routes/relatorios.js';
 import authRoutes from './routes/auth.js';
 import { authenticate } from './middleware/auth.js';
-import pool from './database/db.js';
+import { testConnections } from './config/databases.js';
 
 dotenv.config();
 
@@ -43,7 +43,8 @@ app.get('/health', (req, res) => {
 });
 
 // Iniciar servidor
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 Backend rodando na porta ${PORT}`);
   console.log(`📡 Health check: http://localhost:${PORT}/health`);
+  await testConnections();
 });

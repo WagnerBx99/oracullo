@@ -1,4 +1,4 @@
-import { query } from '../database/db.js';
+import { poolGestao } from '../config/databases.js';
 import bcrypt from 'bcryptjs';
 
 export class Usuario {
@@ -9,7 +9,7 @@ export class Usuario {
     // Hash da senha
     const senhaHash = await bcrypt.hash(senha, 10);
     
-    const result = await query(
+    const result = await poolGestao.query(
       `INSERT INTO usuarios (nome, email, senha_hash)
        VALUES ($1, $2, $3)
        RETURNING id, nome, email, ativo, created_at`,
@@ -21,7 +21,7 @@ export class Usuario {
 
   // Buscar usuário por email
   static async findByEmail(email) {
-    const result = await query(
+    const result = await poolGestao.query(
       'SELECT * FROM usuarios WHERE email = $1',
       [email]
     );
@@ -30,7 +30,7 @@ export class Usuario {
 
   // Buscar usuário por ID
   static async findById(id) {
-    const result = await query(
+    const result = await poolGestao.query(
       'SELECT id, nome, email, ativo, ultimo_login, created_at FROM usuarios WHERE id = $1',
       [id]
     );
@@ -44,7 +44,7 @@ export class Usuario {
 
   // Atualizar último login
   static async updateLastLogin(id) {
-    await query(
+    await poolGestao.query(
       'UPDATE usuarios SET ultimo_login = CURRENT_TIMESTAMP WHERE id = $1',
       [id]
     );
@@ -52,7 +52,7 @@ export class Usuario {
 
   // Salvar refresh token
   static async saveRefreshToken(usuarioId, token, expiresAt) {
-    await query(
+    await poolGestao.query(
       `INSERT INTO refresh_tokens (usuario_id, token, expires_at)
        VALUES ($1, $2, $3)`,
       [usuarioId, token, expiresAt]
@@ -61,7 +61,7 @@ export class Usuario {
 
   // Verificar se refresh token é válido
   static async verifyRefreshToken(token) {
-    const result = await query(
+    const result = await poolGestao.query(
       `SELECT rt.*, u.id as usuario_id, u.nome, u.email 
        FROM refresh_tokens rt
        JOIN usuarios u ON rt.usuario_id = u.id
@@ -75,7 +75,7 @@ export class Usuario {
 
   // Revogar refresh token
   static async revokeRefreshToken(token) {
-    await query(
+    await poolGestao.query(
       'UPDATE refresh_tokens SET revoked = true WHERE token = $1',
       [token]
     );
@@ -83,7 +83,7 @@ export class Usuario {
 
   // Revogar todos os tokens de um usuário
   static async revokeAllUserTokens(usuarioId) {
-    await query(
+    await poolGestao.query(
       'UPDATE refresh_tokens SET revoked = true WHERE usuario_id = $1',
       [usuarioId]
     );

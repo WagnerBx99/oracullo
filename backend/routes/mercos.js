@@ -1,7 +1,7 @@
 import express from 'express';
 import axios from 'axios';
 import { Integracao } from '../models/Integracao.js';
-import { query } from '../database/db.js';
+import { poolGestao } from '../config/databases.js';
 
 const router = express.Router();
 
@@ -55,7 +55,7 @@ router.post('/sync', async (req, res) => {
         });
 
         // Registrar log de sincronização
-        await query(
+        await poolGestao.query(
           `INSERT INTO logs_sincronizacao (integracao_id, tipo, status, total_registros, mensagem)
            VALUES ($1, $2, $3, $4, $5)`,
           [req.body.integracaoId, tipo, 'sucesso', data.length || 0, `Sincronização de ${tipo} concluída com sucesso`]
