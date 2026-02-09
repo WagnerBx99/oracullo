@@ -170,6 +170,24 @@ router.post('/sync', async (req, res) => {
                 ]
               );
               salvosComSucesso++;
+            } else if (tipo === 'pedidos') {
+              await poolTransacional.query(
+                `INSERT INTO pedidos (integracao_id, external_id, numero_pedido, data_pedido, valor_total, status, observacoes, data_json)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                 ON CONFLICT (integracao_id, external_id)
+                 DO UPDATE SET numero_pedido = $3, data_pedido = $4, valor_total = $5, status = $6, observacoes = $7, data_json = $8, updated_at = CURRENT_TIMESTAMP`,
+                [
+                  req.body.integracaoId,
+                  registro.codigo_pedido || registro.numero_pedido,
+                  registro.numero_pedido,
+                  registro.data_previsao || registro.data_pedido,
+                  registro.total_pedido || registro.valor_total_pedido,
+                  registro.etapa || registro.status_pedido || 'pendente',
+                  registro.observacoes || registro.obs,
+                  JSON.stringify(registro)
+                ]
+              );
+              salvosComSucesso++;
             }
             
             // Log a cada 100 registros

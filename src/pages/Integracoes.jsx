@@ -117,12 +117,21 @@ export default function Integracoes() {
           tipo: 'produtos'
         });
         
+        // Sincroniza pedidos
+        const pedidosResult = await api.omie.sync(integracao.id, {
+          api_url: integracao.api_url,
+          api_key: integracao.api_key,
+          app_secret: integracao.company_token,
+          tipo: 'pedidos'
+        });
         
         return { 
           clientes: clientesResult.data || [],
           produtos: produtosResult.data || [],
+          pedidos: pedidosResult.data || [],
           totalClientes: clientesResult.total || 0,
-          totalProdutos: produtosResult.total || 0
+          totalProdutos: produtosResult.total || 0,
+          totalPedidos: pedidosResult.total || 0
         };
       }
       
