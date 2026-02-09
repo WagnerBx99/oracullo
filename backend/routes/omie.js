@@ -182,7 +182,8 @@ router.post('/sync', async (req, res) => {
           [req.body.integracaoId, tipo, 'sucesso', salvosComSucesso, `Sincronização de ${tipo} concluída com sucesso`]
         );
       } catch (dbError) {
-        console.error('[OMIE] Erro ao salvar no banco:', dbError.message);
+        console.error('[OMIE] Erro ao salvar no banco:', dbError);
+        throw dbError;
       }
     }
 
@@ -194,7 +195,7 @@ router.post('/sync', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[OMIE] Erro na sincronização:', error.message);
+    console.error('[OMIE] Erro na sincronização:', error);
 
     // Tratar erro de rate limit (429)
     if (error.response?.status === 429) {
