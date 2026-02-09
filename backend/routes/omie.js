@@ -109,8 +109,16 @@ router.post('/sync', async (req, res) => {
 
     const registros = todosRegistros;
     console.log(`[OMIE] Sincronização completa: ${registros.length} ${tipo} obtidos no total`);
+    
+    // Retornar resposta imediatamente para evitar timeout
+    res.json({
+      success: true,
+      total: registros.length,
+      tipo: tipo,
+      message: `Sincronização de ${tipo} iniciada. ${registros.length} registros serão salvos em background.`
+    });
 
-    // Salvar dados no banco (se tiver integracaoId)
+    // Salvar dados no banco em background (se tiver integracaoId)
     if (req.body.integracaoId) {
       let salvosComSucesso = 0;
       let erros = 0;
@@ -194,13 +202,6 @@ router.post('/sync', async (req, res) => {
         throw dbError;
       }
     }
-
-    return res.json({
-      success: true,
-      data: registros,
-      total: registros.length,
-      tipo: tipo
-    });
 
   } catch (error) {
     console.error('[OMIE] Erro na sincronização:', error);
