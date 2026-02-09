@@ -64,6 +64,10 @@ router.post('/sync', async (req, res) => {
         app_secret: app_secret,
         param: [params]
       };
+      
+      if (pagina === 1) {
+        console.log(`[OMIE DEBUG] Request para ${tipo}:`, JSON.stringify(requestBody, null, 2));
+      }
 
       const response = await axios.post(api_url + config.endpoint, requestBody, {
         headers: {
