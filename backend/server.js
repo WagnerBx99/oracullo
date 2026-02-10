@@ -10,6 +10,7 @@ import integracoesRoutes from './routes/integracoes.js';
 import clientesRoutes from './routes/clientes.js';
 import dashboardRoutes from './routes/dashboard.js';
 import relatoriosRoutes from './routes/relatorios.js';
+import diretoriaRoutes from './routes/diretoria.js';
 import authRoutes from './routes/auth.js';
 import { authenticate } from './middleware/auth.js';
 import { testConnections } from './config/databases.js';
@@ -36,6 +37,7 @@ app.use('/api/perfis', authenticate, perfisRoutes);
 app.use('/api/clientes', authenticate, clientesRoutes);
 app.use('/api/dashboard', authenticate, dashboardRoutes);
 app.use('/api/relatorios', authenticate, relatoriosRoutes);
+app.use('/api/diretoria', authenticate, diretoriaRoutes);
 
 // Rota de health check
 app.get('/health', (req, res) => {

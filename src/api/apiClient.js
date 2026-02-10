@@ -287,6 +287,28 @@ class ApiClient {
     },
   };
 
+  // Diretoria
+  diretoria = {
+    kpis: () => this.request('/diretoria/kpis'),
+    
+    faturamentoMensal: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/diretoria/faturamento-mensal${query ? '?' + query : ''}`);
+    },
+    
+    comparativoTrimestral: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/diretoria/comparativo-trimestral${query ? '?' + query : ''}`);
+    },
+    
+    distribuicaoReceita: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/diretoria/distribuicao-receita${query ? '?' + query : ''}`);
+    },
+    
+    performance: () => this.request('/diretoria/performance'),
+  };
+
   // Clientes
   clientes = {
     list: (params) => {
