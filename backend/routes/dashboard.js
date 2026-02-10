@@ -5,7 +5,7 @@ const router = express.Router();
 
 /**
  * GET /api/dashboard/kpis
- * Retorna KPIs consolidados do período
+ * Retorna KPIs consolidados do período (calculados em tempo real)
  * Query params: periodo (YYYY-MM), filial_id (opcional)
  */
 router.get('/kpis', async (req, res) => {
@@ -14,91 +14,76 @@ router.get('/kpis', async (req, res) => {
     
     // Se não especificar período, usa o mês atual
     const periodoFiltro = periodo || new Date().toISOString().slice(0, 7);
+    const [ano, mes] = periodoFiltro.split('-');
     
-    let query = `
+    // Calcular KPIs diretamente do DB Transacional
+    let kpisQuery = `
       SELECT 
-        periodo,
-        receita_total,
-        lucro_liquido,
-        margem_liquida,
-        ticket_medio,
-        total_pedidos,
-        total_clientes,
-        criado_em
-      FROM kpis_consolidados
-      WHERE TO_CHAR(periodo, 'YYYY-MM') = $1
+        COUNT(DISTINCT p.cliente_id) as total_clientes,
+        COALESCE(SUM(p.valor_total), 0) as receita_total,
+        COUNT(p.id) as total_pedidos,
+        COALESCE(AVG(p.valor_total), 0) as ticket_medio
+      FROM pedidos p
+      WHERE EXTRACT(YEAR FROM p.data_pedido) = $1
+        AND EXTRACT(MONTH FROM p.data_pedido) = $2
     `;
     
-    const params = [periodoFiltro];
+    const params = [parseInt(ano), parseInt(mes)];
     
-    // Se especificar filial, filtrar por ela
     if (filial_id) {
-      query += ` AND integracao_id = $2`;
+      kpisQuery += ` AND p.integracao_id = $3`;
       params.push(filial_id);
     }
     
-    query += ` ORDER BY periodo DESC LIMIT 1`;
+    const result = await poolTransacional.query(kpisQuery, params);
     
-    const result = await poolAnalitico.query(query, params);
+    // Calcular variações (comparar com mês anterior)
+    const mesAnterior = mes === '01' ? 12 : parseInt(mes) - 1;
+    const anoAnterior = mes === '01' ? parseInt(ano) - 1 : parseInt(ano);
     
-    if (result.rows.length === 0) {
-      return res.json({
-        periodo: periodoFiltro,
-        receita_total: 0,
-        lucro_liquido: 0,
-        margem_liquida: 0,
-        ticket_medio: 0,
-        total_pedidos: 0,
-        total_clientes: 0,
-        variacao_receita: 0,
-        variacao_lucro: 0
-      });
-    }
-    
-    const kpiAtual = result.rows[0];
-    
-    // Buscar KPI do mês anterior para calcular variações
-    const [ano, mes] = periodoFiltro.split('-');
-    const mesAnterior = mes === '01' ? '12' : String(parseInt(mes) - 1).padStart(2, '0');
-    const anoAnterior = mes === '01' ? String(parseInt(ano) - 1) : ano;
-    const periodoAnterior = `${anoAnterior}-${mesAnterior}`;
-    
-    const queryAnterior = `
-      SELECT receita_total, lucro_liquido
-      FROM kpis_consolidados
-      WHERE TO_CHAR(periodo, 'YYYY-MM') = $1
-      ${filial_id ? 'AND integracao_id = $2' : ''}
-      ORDER BY periodo DESC LIMIT 1
+    let kpisAnteriorQuery = `
+      SELECT 
+        COALESCE(SUM(p.valor_total), 0) as receita_total
+      FROM pedidos p
+      WHERE EXTRACT(YEAR FROM p.data_pedido) = $1
+        AND EXTRACT(MONTH FROM p.data_pedido) = $2
     `;
     
-    const paramsAnterior = filial_id ? [periodoAnterior, filial_id] : [periodoAnterior];
-    const resultAnterior = await poolAnalitico.query(queryAnterior, paramsAnterior);
+    const paramsAnterior = [anoAnterior, mesAnterior];
+    
+    if (filial_id) {
+      kpisAnteriorQuery += ` AND p.integracao_id = $3`;
+      paramsAnterior.push(filial_id);
+    }
+    
+    const resultAnterior = await poolTransacional.query(kpisAnteriorQuery, paramsAnterior);
+    
+    const kpiAtual = result.rows[0] || {};
+    const kpiAnterior = resultAnterior.rows[0] || {};
     
     let variacaoReceita = 0;
-    let variacaoLucro = 0;
+    const receitaAtual = parseFloat(kpiAtual.receita_total || 0);
+    const receitaAnterior = parseFloat(kpiAnterior.receita_total || 0);
     
-    if (resultAnterior.rows.length > 0) {
-      const kpiAnterior = resultAnterior.rows[0];
-      
-      if (kpiAnterior.receita_total > 0) {
-        variacaoReceita = ((kpiAtual.receita_total - kpiAnterior.receita_total) / kpiAnterior.receita_total * 100).toFixed(2);
-      }
-      
-      if (kpiAnterior.lucro_liquido > 0) {
-        variacaoLucro = ((kpiAtual.lucro_liquido - kpiAnterior.lucro_liquido) / kpiAnterior.lucro_liquido * 100).toFixed(2);
-      }
+    if (receitaAnterior > 0) {
+      variacaoReceita = ((receitaAtual - receitaAnterior) / receitaAnterior * 100).toFixed(2);
     }
+    
+    // Calcular margem líquida (requer dados de custo - por enquanto 0)
+    // TODO: Implementar cálculo de margem quando dados de custo estiverem disponíveis
+    const margemLiquida = 0;
+    const lucroLiquido = 0;
     
     res.json({
       periodo: periodoFiltro,
-      receita_total: parseFloat(kpiAtual.receita_total),
-      lucro_liquido: parseFloat(kpiAtual.lucro_liquido),
-      margem_liquida: parseFloat(kpiAtual.margem_liquida),
-      ticket_medio: parseFloat(kpiAtual.ticket_medio),
-      total_pedidos: kpiAtual.total_pedidos,
-      total_clientes: kpiAtual.total_clientes,
+      receita_total: receitaAtual,
+      lucro_liquido: lucroLiquido,
+      margem_liquida: margemLiquida,
+      ticket_medio: parseFloat(kpiAtual.ticket_medio || 0),
+      total_pedidos: parseInt(kpiAtual.total_pedidos || 0),
+      total_clientes: parseInt(kpiAtual.total_clientes || 0),
       variacao_receita: parseFloat(variacaoReceita),
-      variacao_lucro: parseFloat(variacaoLucro)
+      variacao_lucro: 0
     });
     
   } catch (error) {
@@ -174,7 +159,7 @@ router.get('/stats', async (req, res) => {
   try {
     // Total de clientes no DB Transacional
     const clientesResult = await poolTransacional.query(
-      'SELECT COUNT(*) as total FROM clientes WHERE ativo = true'
+      'SELECT COUNT(*) as total FROM clientes'
     );
     
     // Total de clientes unificados no DB Analítico
@@ -184,12 +169,12 @@ router.get('/stats', async (req, res) => {
     
     // Clientes em múltiplas filiais
     const multiplasResult = await poolAnalitico.query(
-      'SELECT COUNT(*) as total FROM clientes_unificados WHERE total_registros > 1'
+      'SELECT COUNT(*) as total FROM clientes_unificados WHERE total_filiais > 1'
     );
     
     // Total de produtos
     const produtosResult = await poolTransacional.query(
-      'SELECT COUNT(*) as total FROM produtos WHERE ativo = true'
+      'SELECT COUNT(*) as total FROM produtos'
     );
     
     // Total de integrações
