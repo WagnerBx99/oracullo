@@ -8,53 +8,74 @@ const router = express.Router();
  * Retorna KPIs consolidados do período (calculados em tempo real)
  * Query params: periodo (YYYY-MM), filial_id (opcional)
  */
+// Endpoint /api/dashboard/kpis corrigido
 router.get('/kpis', async (req, res) => {
   try {
     const { periodo, filial_id } = req.query;
     
-    // Se não especificar período, usa o mês atual
-    const periodoFiltro = periodo || new Date().toISOString().slice(0, 7);
-    const [ano, mes] = periodoFiltro.split('-');
+    // Se não especificar período, usa o ano atual (acumulado)
+    const anoAtual = new Date().getFullYear();
+    let whereClause = '';
+    let params = [];
+    
+    if (periodo && periodo.includes('-')) {
+      // Período específico (ano-mês)
+      const [ano, mes] = periodo.split('-');
+      whereClause = 'WHERE EXTRACT(YEAR FROM p.data_pedido) = $1 AND EXTRACT(MONTH FROM p.data_pedido) = $2';
+      params = [parseInt(ano), parseInt(mes)];
+    } else {
+      // Ano inteiro
+      const ano = periodo || anoAtual;
+      whereClause = 'WHERE EXTRACT(YEAR FROM p.data_pedido) = $1';
+      params = [parseInt(ano)];
+    }
+    
+    // Adicionar filtro de filial se especificado
+    if (filial_id) {
+      whereClause += ` AND p.integracao_id = $${params.length + 1}`;
+      params.push(filial_id);
+    }
     
     // Calcular KPIs diretamente do DB Transacional
-    let kpisQuery = `
+    const kpisQuery = `
       SELECT 
         COUNT(DISTINCT p.cliente_id) as total_clientes,
         COALESCE(SUM(p.valor_total), 0) as receita_total,
         COUNT(p.id) as total_pedidos,
         COALESCE(AVG(p.valor_total), 0) as ticket_medio
       FROM pedidos p
-      WHERE EXTRACT(YEAR FROM p.data_pedido) = $1
-        AND EXTRACT(MONTH FROM p.data_pedido) = $2
+      ${whereClause}
     `;
-    
-    const params = [parseInt(ano), parseInt(mes)];
-    
-    if (filial_id) {
-      kpisQuery += ` AND p.integracao_id = $3`;
-      params.push(filial_id);
-    }
     
     const result = await poolTransacional.query(kpisQuery, params);
     
-    // Calcular variações (comparar com mês anterior)
-    const mesAnterior = mes === '01' ? 12 : parseInt(mes) - 1;
-    const anoAnterior = mes === '01' ? parseInt(ano) - 1 : parseInt(ano);
+    // Calcular variações (comparar com período anterior)
+    let whereAnteriorClause = '';
+    let paramsAnterior = [];
     
-    let kpisAnteriorQuery = `
+    if (periodo && periodo.includes('-')) {
+      const [ano, mes] = periodo.split('-');
+      const mesAnterior = mes === '01' ? 12 : parseInt(mes) - 1;
+      const anoAnterior = mes === '01' ? parseInt(ano) - 1 : parseInt(ano);
+      whereAnteriorClause = 'WHERE EXTRACT(YEAR FROM p.data_pedido) = $1 AND EXTRACT(MONTH FROM p.data_pedido) = $2';
+      paramsAnterior = [anoAnterior, mesAnterior];
+    } else {
+      const ano = periodo || anoAtual;
+      whereAnteriorClause = 'WHERE EXTRACT(YEAR FROM p.data_pedido) = $1';
+      paramsAnterior = [parseInt(ano) - 1];
+    }
+    
+    if (filial_id) {
+      whereAnteriorClause += ` AND p.integracao_id = $${paramsAnterior.length + 1}`;
+      paramsAnterior.push(filial_id);
+    }
+    
+    const kpisAnteriorQuery = `
       SELECT 
         COALESCE(SUM(p.valor_total), 0) as receita_total
       FROM pedidos p
-      WHERE EXTRACT(YEAR FROM p.data_pedido) = $1
-        AND EXTRACT(MONTH FROM p.data_pedido) = $2
+      ${whereAnteriorClause}
     `;
-    
-    const paramsAnterior = [anoAnterior, mesAnterior];
-    
-    if (filial_id) {
-      kpisAnteriorQuery += ` AND p.integracao_id = $3`;
-      paramsAnterior.push(filial_id);
-    }
     
     const resultAnterior = await poolTransacional.query(kpisAnteriorQuery, paramsAnterior);
     
@@ -69,16 +90,23 @@ router.get('/kpis', async (req, res) => {
       variacaoReceita = ((receitaAtual - receitaAnterior) / receitaAnterior * 100).toFixed(2);
     }
     
-    // Calcular margem líquida (requer dados de custo - por enquanto 0)
-    // TODO: Implementar cálculo de margem quando dados de custo estiverem disponíveis
-    const margemLiquida = 0;
-    const lucroLiquido = 0;
+    // Calcular margem líquida e lucro líquido baseado nos produtos com custo
+    const margemQuery = `
+      SELECT 
+        AVG(margem) as margem_media
+      FROM produtos
+      WHERE margem IS NOT NULL AND margem > 0
+    `;
+    
+    const margemResult = await poolTransacional.query(margemQuery);
+    const margemMedia = parseFloat(margemResult.rows[0]?.margem_media || 0);
+    const lucroLiquido = receitaAtual * (margemMedia / 100);
     
     res.json({
-      periodo: periodoFiltro,
+      periodo: periodo || `${anoAtual}`,
       receita_total: receitaAtual,
       lucro_liquido: lucroLiquido,
-      margem_liquida: margemLiquida,
+      margem_liquida: margemMedia,
       ticket_medio: parseFloat(kpiAtual.ticket_medio || 0),
       total_pedidos: parseInt(kpiAtual.total_pedidos || 0),
       total_clientes: parseInt(kpiAtual.total_clientes || 0),
