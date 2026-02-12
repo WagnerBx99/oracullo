@@ -13,8 +13,9 @@ router.get('/', async (req, res) => {
         u.email,
         u.perfil_id,
         p.nome as perfil_nome,
+        p.cor as perfil_cor,
         u.ativo,
-        u.ultimo_acesso,
+        u.ultimo_login,
         u.created_at,
         u.updated_at
       FROM usuarios u
@@ -44,8 +45,9 @@ router.get('/:id', async (req, res) => {
         u.email,
         u.perfil_id,
         p.nome as perfil_nome,
+        p.cor as perfil_cor,
         u.ativo,
-        u.ultimo_acesso,
+        u.ultimo_login,
         u.created_at,
         u.updated_at
       FROM usuarios u

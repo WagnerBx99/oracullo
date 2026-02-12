@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import mercosRoutes from './routes/mercos.js';
 import omieRoutes from './routes/omie.js';
+import comercialRoutes from "./routes/comercial.js";
 import usuariosRoutes from './routes/usuarios.js';
 import perfisRoutes from './routes/perfis.js';
 import integracoesRoutes from './routes/integracoes.js';
@@ -11,6 +12,8 @@ import clientesRoutes from './routes/clientes.js';
 import dashboardRoutes from './routes/dashboard.js';
 import relatoriosRoutes from './routes/relatorios.js';
 import diretoriaRoutes from './routes/diretoria.js';
+import produtosRoutes from './routes/produtos.js';
+import operacionalRoutes from './routes/operacional.js';
 import authRoutes from './routes/auth.js';
 import { authenticate } from './middleware/auth.js';
 import { testConnections } from './config/databases.js';
@@ -32,12 +35,15 @@ app.use('/api/auth', authRoutes);
 app.use('/api/integracoes', authenticate, integracoesRoutes);
 app.use('/api/mercos', authenticate, mercosRoutes);
 app.use('/api/omie', authenticate, omieRoutes);
+app.use("/api/comercial", comercialRoutes);
 app.use('/api/usuarios', authenticate, usuariosRoutes);
 app.use('/api/perfis', authenticate, perfisRoutes);
 app.use('/api/clientes', authenticate, clientesRoutes);
 app.use('/api/dashboard', authenticate, dashboardRoutes);
 app.use('/api/relatorios', authenticate, relatoriosRoutes);
 app.use('/api/diretoria', authenticate, diretoriaRoutes);
+app.use('/api/produtos', authenticate, produtosRoutes);
+app.use("/api/operacional", operacionalRoutes);
 
 // Rota de health check
 app.get('/health', (req, res) => {

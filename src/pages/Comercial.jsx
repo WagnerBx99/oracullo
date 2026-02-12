@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import api from '../api/apiClient';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, TrendingUp, Users, Target, Award, Zap } from 'lucide-react';
@@ -9,41 +11,39 @@ import {
   ScatterChart, Scatter
 } from 'recharts';
 
-const dadosVendas = [
-  { mes: 'Jul', vendas: 145, ticket: 1680, conversao: 22 },
-  { mes: 'Ago', vendas: 168, ticket: 1720, conversao: 24 },
-  { mes: 'Set', vendas: 182, ticket: 1805, conversao: 25 },
-  { mes: 'Out', vendas: 191, ticket: 1850, conversao: 26 },
-  { mes: 'Nov', vendas: 205, ticket: 1920, conversao: 28 },
-  { mes: 'Dez', vendas: 220, ticket: 2050, conversao: 30 }
-];
-
-const dadosPipeline = [
-  { etapa: 'Prospecção', quantidade: 120, valor: 480000 },
-  { etapa: 'Qualificação', quantidade: 85, valor: 340000 },
-  { etapa: 'Proposta', quantidade: 52, valor: 260000 },
-  { etapa: 'Negociação', quantidade: 35, valor: 175000 },
-  { etapa: 'Fechado', quantidade: 28, valor: 140000 }
-];
-
-const dadosVendedores = [
-  { nome: 'João Silva', vendas: 45, ticket: 2100 },
-  { nome: 'Maria Santos', vendas: 38, ticket: 2350 },
-  { nome: 'Pedro Costa', vendas: 35, ticket: 1980 },
-  { nome: 'Ana Lima', vendas: 42, ticket: 2180 },
-  { nome: 'Carlos Dias', vendas: 40, ticket: 2050 }
-];
-
-const dadosProdutos = [
-  { produto: 'Produto A', vendas: 82, receita: 164000 },
-  { produto: 'Produto B', vendas: 68, receita: 136000 },
-  { produto: 'Produto C', vendas: 55, receita: 110000 },
-  { produto: 'Produto D', vendas: 47, receita: 94000 },
-  { produto: 'Produto E', vendas: 38, receita: 76000 }
-];
-
 export default function Comercial() {
-  // KPIs removidos (Base44 removido)
+  const [periodo] = useState(new Date().getFullYear());
+
+  // Buscar dados das APIs
+  const { data: kpis = {} } = useQuery({
+    queryKey: ['comercial-kpis', periodo],
+    queryFn: () => api.comercial.kpis({ periodo }),
+    initialData: {}
+  });
+
+  const { data: vendasMensais = [] } = useQuery({
+    queryKey: ['comercial-vendas-mensais', periodo],
+    queryFn: () => api.comercial.vendasMensais({ periodo }),
+    initialData: []
+  });
+
+  const { data: pipeline = [] } = useQuery({
+    queryKey: ['comercial-pipeline', periodo],
+    queryFn: () => api.comercial.pipeline({ periodo }),
+    initialData: []
+  });
+
+  const { data: topProdutos = [] } = useQuery({
+    queryKey: ['comercial-top-produtos', periodo],
+    queryFn: () => api.comercial.topProdutos({ periodo, limit: 5 }),
+    initialData: []
+  });
+
+  const { data: vendedores = [] } = useQuery({
+    queryKey: ['comercial-vendedores', periodo],
+    queryFn: () => api.comercial.vendedores({ periodo }),
+    initialData: []
+  });
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -52,7 +52,7 @@ export default function Comercial() {
           <p className="font-semibold text-foreground mb-2">{label}</p>
           {payload.map((entry, index) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>
-              {entry.name}: {entry.value?.toLocaleString('pt-BR')}
+              {entry.name}: {Number(entry.value || 0).toLocaleString('pt-BR')}
             </p>
           ))}
         </div>
@@ -82,10 +82,34 @@ export default function Comercial() {
       {/* KPIs Comerciais */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: 'Vendas do Mês', value: '220', change: '+15%', icon: ShoppingCart, color: 'blue' },
-          { label: 'Ticket Médio', value: 'R$ 2.050', change: '+12%', icon: TrendingUp, color: 'green' },
-          { label: 'Taxa Conversão', value: '30%', change: '+8%', icon: Target, color: 'orange' },
-          { label: 'NPS', value: '85', change: '+5pts', icon: Award, color: 'purple' }
+          { 
+            label: 'Vendas do Mês', 
+            value: kpis.vendas_mes || 0, 
+            change: '+15%', 
+            icon: ShoppingCart, 
+            color: 'blue' 
+          },
+          { 
+            label: 'Ticket Médio', 
+            value: `R$ ${Number(kpis.ticket_medio || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, 
+            change: '+12%', 
+            icon: TrendingUp, 
+            color: 'green' 
+          },
+          { 
+            label: 'Taxa Conversão', 
+            value: `${Number(kpis.taxa_conversao || 0).toFixed(1)}%`, 
+            change: '+8%', 
+            icon: Target, 
+            color: 'orange' 
+          },
+          { 
+            label: 'NPS', 
+            value: kpis.nps || 85, 
+            change: '+5pts', 
+            icon: Award, 
+            color: 'purple' 
+          }
         ].map((kpi, index) => {
           const Icon = kpi.icon;
           const colorClasses = {
@@ -134,7 +158,7 @@ export default function Comercial() {
           <CardContent className="pt-6">
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={dadosVendas}>
+                <ComposedChart data={vendasMensais}>
                   <defs>
                     <linearGradient id="colorVendas" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#ff5c00" stopOpacity={0.8}/>
@@ -182,7 +206,7 @@ export default function Comercial() {
           <CardContent className="pt-6">
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dadosPipeline} layout="vertical">
+                <BarChart data={pipeline} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis type="number" stroke="hsl(var(--muted-foreground))" />
                   <YAxis dataKey="etapa" type="category" width={100} stroke="hsl(var(--muted-foreground))" />
@@ -215,8 +239,8 @@ export default function Comercial() {
                   <XAxis dataKey="vendas" name="Vendas" stroke="hsl(var(--muted-foreground))" />
                   <YAxis dataKey="ticket" name="Ticket" stroke="hsl(var(--muted-foreground))" />
                   <Tooltip cursor={{ strokeDasharray: '3 3' }} content={<CustomTooltip />} />
-                  <Scatter name="Vendedores" data={dadosVendedores} fill="#ff5c00">
-                    {dadosVendedores.map((entry, index) => (
+                  <Scatter name="Vendedores" data={vendedores} fill="#ff5c00">
+                    {vendedores.map((entry, index) => (
                       <circle key={index} r={8} fill="#ff5c00" />
                     ))}
                   </Scatter>
@@ -237,7 +261,7 @@ export default function Comercial() {
           <CardContent className="pt-6">
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dadosProdutos}>
+                <BarChart data={topProdutos}>
                   <defs>
                     <linearGradient id="colorReceita" x1="0" y1="0" x2="1" y2="0">
                       <stop offset="5%" stopColor="#135670" stopOpacity={0.8}/>
@@ -245,7 +269,12 @@ export default function Comercial() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="produto" stroke="hsl(var(--muted-foreground))" />
+                  <XAxis 
+                    dataKey="codigo" 
+                    stroke="hsl(var(--muted-foreground))"
+                    tick={{ fontSize: 10 }}
+                    label={{ value: 'Código do Produto', position: 'insideBottom', offset: -5, fontSize: 11 }}
+                  />
                   <YAxis stroke="hsl(var(--muted-foreground))" />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend />

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { safeFixed, formatCurrency } from '@/utils/formatters';
 
 export default function MargemChart({ produtos }) {
   const data = produtos.slice(0, 10).map(p => ({
@@ -22,9 +23,9 @@ export default function MargemChart({ produtos }) {
         <div className="bg-card p-4 rounded-xl shadow-xl border border-border">
           <p className="font-semibold text-foreground mb-2">{label}</p>
           <div className="space-y-1 text-sm">
-            <p className="text-muted-foreground">Margem: <span className="font-medium text-foreground">{payload[0].value.toFixed(1)}%</span></p>
-            <p className="text-muted-foreground">Custo: <span className="font-medium text-foreground">R$ {payload[0].payload.custo.toFixed(2)}</span></p>
-            <p className="text-muted-foreground">Venda: <span className="font-medium text-foreground">R$ {payload[0].payload.venda.toFixed(2)}</span></p>
+            <p className="text-muted-foreground">Margem: <span className="font-medium text-foreground">{safeFixed(payload[0].value, 1)}%</span></p>
+            <p className="text-muted-foreground">Custo: <span className="font-medium text-foreground">{formatCurrency(payload[0].payload.custo)}</span></p>
+            <p className="text-muted-foreground">Venda: <span className="font-medium text-foreground">{formatCurrency(payload[0].payload.venda)}</span></p>
           </div>
         </div>
       );

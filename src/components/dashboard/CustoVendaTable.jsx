@@ -34,7 +34,7 @@ export default function CustoVendaTable({ produtos, onUpdateProduto }) {
 
   const calcularMargem = (custo, venda) => {
     if (!custo || !venda) return 0;
-    return ((venda - custo) / venda * 100).toFixed(1);
+    return parseFloat(((venda - custo) / venda * 100).toFixed(1));
   };
 
   const handleStartEdit = (produto) => {
@@ -120,10 +120,10 @@ export default function CustoVendaTable({ produtos, onUpdateProduto }) {
                         {produto.nome}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        R$ {produto.custo?.toFixed(2) || '0.00'}
+                        R$ {Number(produto.custo || 0).toFixed(2) || '0.00'}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
-                        R$ {produto.preco_venda?.toFixed(2) || '0.00'}
+                        R$ {Number(produto.preco_venda || 0).toFixed(2) || '0.00'}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
@@ -133,7 +133,7 @@ export default function CustoVendaTable({ produtos, onUpdateProduto }) {
                             <TrendingDown className="w-4 h-4 text-red-500" />
                           )}
                           <span className={margem >= 30 ? 'text-emerald-600' : 'text-red-500'}>
-                            {margem}%
+                            {Number(margem || 0).toFixed(1)}%
                           </span>
                         </div>
                       </TableCell>
@@ -156,7 +156,7 @@ export default function CustoVendaTable({ produtos, onUpdateProduto }) {
                         ) : (
                           <div className="flex items-center gap-2">
                             <span className="text-muted-foreground">
-                              {produto.novo_preco ? `R$ ${produto.novo_preco.toFixed(2)}` : '-'}
+                              {produto.novo_preco ? `R$ ${Number(produto.novo_preco).toFixed(2)}` : '-'}
                             </span>
                             <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => handleStartEdit(produto)}>
                               <Edit2 className="w-4 h-4 text-muted-foreground" />

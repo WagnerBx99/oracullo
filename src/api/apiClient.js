@@ -287,6 +287,13 @@ class ApiClient {
     },
   };
 
+  // Produtos
+  produtos = {
+    list: () => this.request('/produtos'),
+    
+    stats: () => this.request('/produtos/stats'),
+  };
+
   // Diretoria
   diretoria = {
     kpis: () => this.request('/diretoria/kpis'),
@@ -307,6 +314,56 @@ class ApiClient {
     },
     
     performance: () => this.request('/diretoria/performance'),
+  };
+
+  // Comercial
+  comercial = {
+    kpis: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/comercial/kpis${query ? '?' + query : ''}`);
+    },
+    
+    vendasMensais: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/comercial/vendas-mensais${query ? '?' + query : ''}`);
+    },
+    
+    pipeline: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/comercial/pipeline${query ? '?' + query : ''}`);
+    },
+    
+    topProdutos: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/comercial/top-produtos${query ? '?' + query : ''}`);
+    },
+    
+    vendedores: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/comercial/vendedores${query ? '?' + query : ''}`);
+    },
+  };
+
+  // Operacional
+  operacional = {
+    kpis: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/operacional/kpis${query ? '?' + query : ''}`);
+    },
+    
+    producaoSemanal: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/operacional/producao-semanal${query ? '?' + query : ''}`);
+    },
+    
+    entregasPeriodo: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/operacional/entregas-periodo${query ? '?' + query : ''}`);
+    },
+    
+    estoque: () => {
+      return this.request('/operacional/estoque');
+    },
   };
 
   // Clientes

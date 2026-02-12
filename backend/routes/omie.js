@@ -5,6 +5,72 @@ import { poolGestao, poolTransacional } from '../config/databases.js';
 
 const router = express.Router();
 
+// Função para sincronizar custos da filial Curitiba
+async function sincronizarCustosCuritiba(appKey, appSecret) {
+  let custosAtualizados = 0;
+  let pagina = 1;
+  let totalPaginas = 1;
+
+  try {
+    while (pagina <= totalPaginas) {
+      // Buscar posição de estoque (contém nCMC - Custo Médio Contábil)
+      const response = await axios.post('https://app.omie.com.br/api/v1/estoque/consulta/', {
+        call: 'ListarPosEstoque',
+        app_key: appKey,
+        app_secret: appSecret,
+        param: [{
+          nPagina: pagina,
+          nRegPorPagina: 100
+        }]
+      });
+
+      const dados = response.data;
+      totalPaginas = dados.nTotPaginas;
+
+      // Atualizar custo de cada produto
+      for (const produto of dados.produtos) {
+        const codigo = produto.cCodigo;
+        const custo = produto.nCMC; // Custo Médio Contábil
+
+        if (custo && custo > 0) {
+          try {
+            const result = await poolTransacional.query(
+              `UPDATE produtos 
+               SET 
+                 custo = $1,
+                 margem = CASE 
+                   WHEN preco > 0 THEN ((preco - $1) / preco * 100)
+                   ELSE 0
+                 END,
+                 updated_at = CURRENT_TIMESTAMP
+               WHERE codigo = $2 AND ativo = true`,
+              [custo, codigo]
+            );
+            
+            if (result.rowCount > 0) {
+              custosAtualizados++;
+            }
+          } catch (updateError) {
+            console.error(`[OMIE] Erro ao atualizar custo do produto ${codigo}:`, updateError.message);
+          }
+        }
+      }
+
+      pagina++;
+      
+      // Aguardar 500ms entre requisições
+      if (pagina <= totalPaginas) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+
+    return custosAtualizados;
+  } catch (error) {
+    console.error('[OMIE] Erro ao buscar custos:', error.message);
+    throw error;
+  }
+}
+
 // Função para converter data DD/MM/YYYY para YYYY-MM-DD
 const convertDateFormat = (dateStr) => {
   if (!dateStr || dateStr === '') return null;
@@ -210,6 +276,18 @@ router.post('/sync', async (req, res) => {
         }
 
         console.log(`[OMIE] Finalizado: ${salvosComSucesso}/${registros.length} ${tipo} salvos no banco (${erros} erros)`);
+
+        // Se sincronizou produtos, buscar custos da filial Curitiba
+        if (tipo === 'produtos') {
+          console.log('[OMIE] Iniciando sincronização de custos da filial Curitiba...');
+          try {
+            const custosAtualizados = await sincronizarCustosCuritiba(api_key, app_secret);
+            console.log(`[OMIE] Custos atualizados: ${custosAtualizados} produtos`);
+          } catch (custoError) {
+            console.error('[OMIE] Erro ao sincronizar custos:', custoError.message);
+            // Não falha a sincronização se custos falharem
+          }
+        }
 
         // Atualizar status da integração
         await Integracao.update(req.body.integracaoId, {

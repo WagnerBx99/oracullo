@@ -18,6 +18,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import * as XLSX from 'xlsx-js-style';
+import api from '@/api/apiClient';
 
 export default function GestaoPrecos() {
   const queryClient = useQueryClient();
@@ -26,8 +27,18 @@ export default function GestaoPrecos() {
 
   const { data: produtos = [], isLoading } = useQuery({
     queryKey: ['produtos'],
-    queryFn: async () => [],
+    queryFn: () => api.produtos.list(),
     initialData: []
+  });
+
+  const { data: stats } = useQuery({
+    queryKey: ['produtos-stats'],
+    queryFn: () => api.produtos.stats(),
+    initialData: {
+      total_produtos: 0,
+      custo_medio: 0,
+      margem_media: 0
+    }
   });
 
   const updateMutation = useMutation({
@@ -206,19 +217,21 @@ export default function GestaoPrecos() {
   };
 
   // Calculate stats
-  const totalProdutos = produtos.length;
-  const custoMedio = produtos.length > 0 
-    ? produtos.reduce((sum, p) => sum + (p.custo || 0), 0) / produtos.length 
-    : 0;
-  const margemMedia = produtos.length > 0
-    ? produtos.reduce((sum, p) => {
-        if (p.custo && p.preco_venda) {
-          return sum + ((p.preco_venda - p.custo) / p.preco_venda * 100);
-        }
-        return sum;
-      }, 0) / produtos.filter(p => p.custo && p.preco_venda).length || 0
-    : 0;
+  console.log('=== GESTAO PRECOS DEBUG ===');
+  console.log('stats raw:', stats);
+  console.log('stats.total_produtos:', stats?.total_produtos, 'type:', typeof stats?.total_produtos);
+  console.log('stats.custo_medio:', stats?.custo_medio, 'type:', typeof stats?.custo_medio);
+  console.log('stats.margem_media:', stats?.margem_media, 'type:', typeof stats?.margem_media);
+  
+  const totalProdutos = parseInt(stats?.total_produtos) || 0;
+  const custoMedio = parseFloat(stats?.custo_medio) || 0;
+  const margemMedia = parseFloat(stats?.margem_media) || 0;
   const produtosComNovoPreco = produtos.filter(p => p.novo_preco).length;
+  
+  console.log('totalProdutos:', totalProdutos, 'type:', typeof totalProdutos);
+  console.log('custoMedio:', custoMedio, 'type:', typeof custoMedio);
+  console.log('margemMedia:', margemMedia, 'type:', typeof margemMedia);
+  console.log('=========================');
 
   return (
     <div className="space-y-8">
@@ -303,23 +316,26 @@ export default function GestaoPrecos() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
           title="Total de Produtos"
-          value={totalProdutos}
+          value={totalProdutos.toLocaleString('pt-BR')}
           subtitle="Consolidado ERP/CRM"
           icon={Package}
           color="blue"
+          isLoading={isLoading}
         />
         <StatsCard
           title="Custo Médio"
-          value={`R$ ${custoMedio.toFixed(2)}`}
+          value={`R$ ${Number(custoMedio || 0).toFixed(2)}`}
           icon={DollarSign}
           color="green"
+          isLoading={isLoading}
         />
         <StatsCard
           title="Margem Média"
-          value={`${margemMedia.toFixed(1)}%`}
+          value={`${Number(margemMedia || 0).toFixed(1)}%`}
           icon={Percent}
           color="purple"
-          trend={2.5}
+          trend={margemMedia > 0 ? 2.5 : 0}
+          isLoading={isLoading}
         />
         <StatsCard
           title="Novos Preços"

@@ -69,7 +69,7 @@ export default function Formularios() {
     const custo = parseFloat(produtoForm.custo) || 0;
     const venda = parseFloat(produtoForm.preco_venda) || 0;
     if (custo && venda) {
-      return ((venda - custo) / venda * 100).toFixed(1);
+      return Number(((venda - custo) / venda * 100) || 0).toFixed(1);
     }
     return '0.0';
   };

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import api from '../api/apiClient';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,7 @@ export default function Manipulaveis() {
 
   const { data: produtos = [], isLoading } = useQuery({
     queryKey: ['produtos'],
-    queryFn: async () => [],
+    queryFn: api.produtos.list,
     initialData: []
   });
 
@@ -254,14 +255,14 @@ export default function Manipulaveis() {
                         </div>
                         <div className="flex items-center gap-4 mt-2 text-sm">
                           <span className="text-slate-500">
-                            Custo: <span className="font-medium text-slate-700">R$ {produto.custo?.toFixed(2)}</span>
+                            Custo: <span className="font-medium text-slate-700">R$ {Number(produto.custo || 0).toFixed(2)}</span>
                           </span>
                           <span className="text-slate-500">
-                            Venda: <span className="font-medium text-slate-700">R$ {produto.preco_venda?.toFixed(2)}</span>
+                            Venda: <span className="font-medium text-slate-700">R$ {Number(produto.preco_venda || 0).toFixed(2)}</span>
                           </span>
                           <Badge variant="outline" className="bg-red-50 text-red-600 border-red-200">
                             <TrendingDown className="w-3 h-3 mr-1" />
-                            {margemAtual.toFixed(1)}%
+                            {Number(margemAtual || 0).toFixed(1)}%
                           </Badge>
                         </div>
                       </div>
@@ -270,7 +271,7 @@ export default function Manipulaveis() {
                         <div className="text-right">
                           <p className="text-sm text-slate-500">Novo preço sugerido</p>
                           <p className="text-lg font-bold text-blue-600">
-                            R$ {novoPrecoCalculado.toFixed(2)}
+                            R$ {Number(novoPrecoCalculado || 0).toFixed(2)}
                           </p>
                           <p className="text-xs text-emerald-600">
                             Margem: {margemIdeal}%

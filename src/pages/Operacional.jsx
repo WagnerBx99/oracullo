@@ -1,5 +1,6 @@
-import React from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import api from '../api/apiClient';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Package, Clock, CheckCircle, AlertTriangle, TrendingUp, Activity } from 'lucide-react';
@@ -9,22 +10,7 @@ import {
   ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 
-const dadosProducao = [
-  { dia: 'Seg', planejado: 450, realizado: 425, eficiencia: 94 },
-  { dia: 'Ter', planejado: 450, realizado: 465, eficiencia: 103 },
-  { dia: 'Qua', planejado: 450, realizado: 438, eficiencia: 97 },
-  { dia: 'Qui', planejado: 450, realizado: 472, eficiencia: 105 },
-  { dia: 'Sex', planejado: 450, realizado: 455, eficiencia: 101 },
-  { dia: 'Sáb', planejado: 300, realizado: 295, eficiencia: 98 }
-];
-
-const dadosEntregas = [
-  { periodo: '00-06h', entregas: 12, atraso: 1 },
-  { periodo: '06-12h', entregas: 45, atraso: 3 },
-  { periodo: '12-18h', entregas: 68, atraso: 5 },
-  { periodo: '18-24h', entregas: 34, atraso: 2 }
-];
-
+// Dados mockados apenas para Indicadores de Qualidade (não temos dados reais)
 const dadosQualidade = [
   { mes: 'Jul', conformidade: 96.5, retrabalho: 2.1, refugo: 1.4 },
   { mes: 'Ago', conformidade: 97.2, retrabalho: 1.8, refugo: 1.0 },
@@ -34,24 +20,33 @@ const dadosQualidade = [
   { mes: 'Dez', conformidade: 98.8, retrabalho: 0.8, refugo: 0.4 }
 ];
 
-const dadosEstoque = [
-  { categoria: 'Matéria Prima', nivel: 85, minimo: 70, maximo: 100 },
-  { categoria: 'Em Processo', nivel: 45, minimo: 30, maximo: 60 },
-  { categoria: 'Produto Acabado', nivel: 92, minimo: 80, maximo: 120 },
-  { categoria: 'Embalagens', nivel: 78, minimo: 65, maximo: 90 }
-];
-
 export default function Operacional() {
-  // Dados removidos (Base44 removido)
-  const dados = [];
-  const kpis = [];
-  /*
-  const { data: kpis = [] } = useQuery({
-    queryKey: ['kpis'],
-    queryFn: async () => [],
+  const [periodo] = useState(new Date().getFullYear());
+
+  // Buscar dados das APIs
+  const { data: kpis = {} } = useQuery({
+    queryKey: ['operacional-kpis', periodo],
+    queryFn: () => api.operacional.kpis({ periodo }),
+    initialData: {}
+  });
+
+  const { data: dadosProducao = [] } = useQuery({
+    queryKey: ['operacional-producao', periodo],
+    queryFn: () => api.operacional.producaoSemanal({ periodo }),
     initialData: []
   });
-  */
+
+  const { data: dadosEntregas = [] } = useQuery({
+    queryKey: ['operacional-entregas', periodo],
+    queryFn: () => api.operacional.entregasPeriodo({ periodo }),
+    initialData: []
+  });
+
+  const { data: dadosEstoque = [] } = useQuery({
+    queryKey: ['operacional-estoque'],
+    queryFn: () => api.operacional.estoque(),
+    initialData: []
+  });
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -91,38 +86,62 @@ export default function Operacional() {
       {/* KPIs Operacionais */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: 'Eficiência Geral', value: '98.8%', change: '+2.3%', icon: TrendingUp, color: 'green' },
-          { label: 'Prazo Médio', value: '3.2 dias', change: '-15%', icon: Clock, color: 'blue' },
-          { label: 'Taxa de Entrega', value: '96.5%', change: '+1.8%', icon: CheckCircle, color: 'orange' },
-          { label: 'Não Conformidades', value: '0.4%', change: '-0.2%', icon: AlertTriangle, color: 'purple' }
+          { 
+            label: 'Eficiência Geral', 
+            value: `${kpis.eficiencia_geral || 0}%`, 
+            change: '+2.3%', 
+            icon: TrendingUp, 
+            color: 'green' 
+          },
+          { 
+            label: 'Prazo Médio', 
+            value: `${kpis.prazo_medio || 0} dias`, 
+            change: '-15%', 
+            icon: Clock, 
+            color: 'blue' 
+          },
+          { 
+            label: 'Taxa de Entrega', 
+            value: `${kpis.taxa_entrega || 0}%`, 
+            change: '+1.8%', 
+            icon: CheckCircle, 
+            color: 'orange' 
+          },
+          { 
+            label: 'Não Conformidades', 
+            value: `${kpis.nao_conformidades || 0}%`, 
+            change: '-0.2%', 
+            icon: AlertTriangle, 
+            color: 'purple' 
+          }
         ].map((kpi, index) => {
           const Icon = kpi.icon;
           const colorClasses = {
-            green: 'from-emerald-500 to-emerald-600',
-            blue: 'from-[#135670] to-[#1a7a9e]',
-            orange: 'from-[#ff5c00] to-orange-600',
-            purple: 'from-purple-500 to-purple-600'
+            green: 'bg-green-500/10 text-green-500',
+            blue: 'bg-blue-500/10 text-blue-500',
+            orange: 'bg-orange-500/10 text-orange-500',
+            purple: 'bg-purple-500/10 text-purple-500'
           };
+
           return (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
-              whileHover={{ y: -5 }}
             >
-              <Card className="border-0 shadow-lg hover:shadow-2xl transition-all bg-card">
+              <Card className="border-0 shadow-xl bg-card hover:shadow-2xl transition-shadow">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${colorClasses[kpi.color]} flex items-center justify-center shadow-lg`}>
-                      <Icon className="w-6 h-6 text-white" />
+                    <div className={`w-12 h-12 rounded-xl ${colorClasses[kpi.color]} flex items-center justify-center`}>
+                      <Icon className="w-6 h-6" />
                     </div>
-                    <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
+                    <Badge variant={kpi.change.startsWith('+') ? 'default' : 'secondary'} className="text-xs">
                       {kpi.change}
                     </Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground mb-1">{kpi.label}</p>
-                  <p className="text-3xl font-bold text-foreground">{kpi.value}</p>
+                  <h3 className="text-sm font-medium text-muted-foreground mb-1">{kpi.label}</h3>
+                  <p className="text-3xl font-bold gradient-text">{kpi.value}</p>
                 </CardContent>
               </Card>
             </motion.div>
@@ -130,9 +149,9 @@ export default function Operacional() {
         })}
       </div>
 
-      {/* Gráficos Principais */}
+      {/* Gráficos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Produção vs Planejado */}
+        {/* Produção: Planejado vs Realizado */}
         <Card className="border-0 shadow-xl bg-card">
           <CardHeader className="border-b bg-muted/30">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -145,9 +164,9 @@ export default function Operacional() {
               <ResponsiveContainer width="100%" height="100%">
                 <ComposedChart data={dadosProducao}>
                   <defs>
-                    <linearGradient id="colorEficiencia" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0.1}/>
+                    <linearGradient id="colorPlanejado" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#135670" stopOpacity={0.1}/>
+                      <stop offset="95%" stopColor="#135670" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -156,36 +175,16 @@ export default function Operacional() {
                   <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend />
-                  <Bar 
-                    yAxisId="left"
-                    dataKey="planejado" 
-                    fill="#94a3b8" 
-                    name="Planejado"
-                    radius={[8, 8, 0, 0]}
-                  />
-                  <Bar 
-                    yAxisId="left"
-                    dataKey="realizado" 
-                    fill="#135670" 
-                    name="Realizado"
-                    radius={[8, 8, 0, 0]}
-                  />
-                  <Area 
-                    yAxisId="right"
-                    type="monotone" 
-                    dataKey="eficiencia" 
-                    fill="url(#colorEficiencia)" 
-                    stroke="#10b981" 
-                    strokeWidth={2}
-                    name="Eficiência %"
-                  />
+                  <Area yAxisId="left" type="monotone" dataKey="planejado" stroke="#135670" fill="url(#colorPlanejado)" name="Planejado" />
+                  <Bar yAxisId="left" dataKey="realizado" fill="#ff5c00" name="Realizado" radius={[8, 8, 0, 0]} />
+                  <Line yAxisId="right" type="monotone" dataKey="eficiencia" stroke="#10b981" strokeWidth={2} name="Eficiência %" />
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        {/* Entregas e Atrasos */}
+        {/* Entregas por Período */}
         <Card className="border-0 shadow-xl bg-card">
           <CardHeader className="border-b bg-muted/30">
             <CardTitle className="text-lg flex items-center gap-2">
@@ -202,22 +201,19 @@ export default function Operacional() {
                   <YAxis stroke="hsl(var(--muted-foreground))" />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend />
-                  <Bar dataKey="entregas" stackId="a" fill="#135670" name="Entregas no Prazo" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="entregas" stackId="a" fill="#135670" name="Entregas no Prazo" radius={[0, 0, 0, 0]} />
                   <Bar dataKey="atraso" stackId="a" fill="#ef4444" name="Entregas Atrasadas" radius={[8, 8, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Gráficos Secundários */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Qualidade */}
+        {/* Indicadores de Qualidade */}
         <Card className="border-0 shadow-xl bg-card">
           <CardHeader className="border-b bg-muted/30">
             <CardTitle className="text-lg flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-emerald-600" />
+              <CheckCircle className="w-5 h-5 text-[#10b981]" />
               Indicadores de Qualidade
             </CardTitle>
           </CardHeader>
@@ -230,30 +226,9 @@ export default function Operacional() {
                   <YAxis stroke="hsl(var(--muted-foreground))" />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="conformidade" 
-                    stroke="#10b981" 
-                    strokeWidth={3}
-                    dot={{ fill: '#10b981', r: 5 }}
-                    name="Conformidade %"
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="retrabalho" 
-                    stroke="#ff5c00" 
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                    name="Retrabalho %"
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="refugo" 
-                    stroke="#ef4444" 
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                    name="Refugo %"
-                  />
+                  <Line type="monotone" dataKey="conformidade" stroke="#10b981" strokeWidth={2} name="Conformidade %" />
+                  <Line type="monotone" dataKey="retrabalho" stroke="#f59e0b" strokeWidth={2} name="Retrabalho %" />
+                  <Line type="monotone" dataKey="refugo" stroke="#ef4444" strokeWidth={2} name="Refugo %" />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -270,18 +245,24 @@ export default function Operacional() {
           </CardHeader>
           <CardContent className="pt-6">
             <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dadosEstoque} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis type="number" stroke="hsl(var(--muted-foreground))" />
-                  <YAxis dataKey="categoria" type="category" width={120} stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend />
-                  <Bar dataKey="nivel" fill="#135670" name="Nível Atual" radius={[0, 8, 8, 0]} />
-                  <Bar dataKey="minimo" fill="#f59e0b" name="Mínimo" radius={[0, 8, 8, 0]} />
-                  <Bar dataKey="maximo" fill="#10b981" name="Máximo" radius={[0, 8, 8, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+              {dadosEstoque.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={dadosEstoque} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis type="number" stroke="hsl(var(--muted-foreground))" />
+                    <YAxis dataKey="categoria" type="category" stroke="hsl(var(--muted-foreground))" width={120} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                    <Bar dataKey="nivel" fill="#135670" name="Nível Atual" radius={[0, 8, 8, 0]} />
+                    <Bar dataKey="minimo" fill="#f59e0b" name="Mínimo" radius={[0, 8, 8, 0]} />
+                    <Bar dataKey="maximo" fill="#10b981" name="Máximo" radius={[0, 8, 8, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center text-muted-foreground">
+                  <p>Sem dados de estoque por categoria</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

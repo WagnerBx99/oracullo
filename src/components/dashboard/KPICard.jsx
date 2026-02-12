@@ -10,20 +10,20 @@ export default function KPICard({ kpi, index }) {
     : 0;
   
   const atingimentoMeta = kpi.valor_meta 
-    ? (kpi.valor_atual / kpi.valor_meta * 100) 
+    ? (Number(kpi.valor_atual || 0) / Number(kpi.valor_meta || 1) * 100) 
     : 0;
 
   const formatarValor = (valor) => {
     if (!valor) return '0';
     switch (kpi.unidade) {
       case 'reais':
-        return `R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+        return `R$ ${Number(valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
       case 'percentual':
-        return `${valor.toFixed(1)}%`;
+        return `${Number(valor || 0).toFixed(1)}%`;
       case 'dias':
-        return `${valor} dias`;
+        return `${valor || 0} dias`;
       default:
-        return valor.toLocaleString('pt-BR');
+        return Number(valor || 0).toLocaleString('pt-BR');
     }
   };
 
@@ -95,7 +95,7 @@ export default function KPICard({ kpi, index }) {
               <div className="flex items-center justify-between text-xs">
                 <span className="text-slate-400">Atingimento</span>
                 <span className={`font-semibold ${atingiuMeta ? 'text-emerald-600' : 'text-amber-600'}`}>
-                  {atingimentoMeta.toFixed(0)}%
+                  {Number(atingimentoMeta || 0).toFixed(0)}%
                 </span>
               </div>
             </div>

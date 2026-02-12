@@ -55,17 +55,17 @@ export default function Diretoria() {
   const formatCurrency = (value) => {
     if (!value) return 'R$ 0';
     if (value >= 1000000) {
-      return `R$ ${(value / 1000000).toFixed(1)}M`;
+      return `R$ ${Number((value / 1000000) || 0).toFixed(1)}M`;
     }
     if (value >= 1000) {
-      return `R$ ${(value / 1000).toFixed(0)}K`;
+      return `R$ ${Number((value / 1000) || 0).toFixed(0)}K`;
     }
-    return `R$ ${value.toFixed(0)}`;
+    return `R$ ${Number(value || 0).toFixed(0)}`;
   };
 
   const formatPercent = (value) => {
     if (!value && value !== 0) return '0%';
-    return `${value.toFixed(1)}%`;
+    return `${Number(value || 0).toFixed(1)}%`;
   };
 
   // KPIs para os cards

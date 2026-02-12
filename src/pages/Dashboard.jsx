@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Package, DollarSign, TrendingUp, BarChart3, Plus, Upload, RefreshCw, Database, Target, Edit3, Users } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { motion } from "framer-motion";
 import StatsCard from '@/components/dashboard/StatsCard';
 import KPICard from '@/components/dashboard/KPICard';
@@ -14,7 +14,7 @@ import api from '@/api/apiClient';
 
 export default function Dashboard() {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("consolidado");
+
   const [isEditMode, setIsEditMode] = useState(false);
   const [dashboardWidgets, setDashboardWidgets] = useState([]);
 
@@ -55,12 +55,27 @@ export default function Dashboard() {
 
   const isLoading = statsLoading || kpisLoading || vendasLoading || integracoesLoading;
 
+  // DEBUG: Log dos dados recebidos
+  console.log('=== DASHBOARD DEBUG ===');
+  console.log('kpis raw data:', kpis);
+  console.log('kpisLoading:', kpisLoading);
+  console.log('stats:', stats);
+  console.log('statsLoading:', statsLoading);
+
   // Calcular totais
   const totalClientes = stats?.total_clientes || 0;
   const totalClientesUnificados = stats?.total_clientes_unificados || 0;
   const receitaTotal = kpis?.receita_total || 0;
   const margemLiquida = kpis?.margem_liquida || 0;
   const variacaoReceita = kpis?.variacao_receita || 0;
+
+  console.log('receitaTotal calculado:', receitaTotal);
+  console.log('margemLiquida calculada:', margemLiquida);
+  console.log('variacaoReceita calculada:', variacaoReceita);
+  console.log('kpis?.ticket_medio:', kpis?.ticket_medio);
+  console.log('kpis?.total_pedidos:', kpis?.total_pedidos);
+  console.log('kpis?.total_clientes:', kpis?.total_clientes);
+  console.log('======================');
 
   return (
     <div className="space-y-8">
@@ -105,7 +120,7 @@ export default function Dashboard() {
         />
         <StatsCard
           title="Receita Total"
-          value={`R$ ${(receitaTotal / 1000).toFixed(1)}K`}
+          value={`R$ ${Number((receitaTotal / 1000) || 0).toFixed(1)}K`}
           subtitle={`${variacaoReceita > 0 ? '+' : ''}${variacaoReceita}% vs mês anterior`}
           icon={DollarSign}
           color="green"
@@ -114,7 +129,7 @@ export default function Dashboard() {
         />
         <StatsCard
           title="Margem Líquida"
-          value={`${margemLiquida.toFixed(1)}%`}
+          value={`${Number(margemLiquida || 0).toFixed(1)}%`}
           subtitle="Média consolidada"
           icon={TrendingUp}
           color="purple"
@@ -163,10 +178,12 @@ export default function Dashboard() {
               kpi={{
                 id: 1,
                 nome: 'Receita Total',
-                valor: receitaTotal,
-                formato: 'moeda',
-                variacao: variacaoReceita,
-                meta: receitaTotal * 1.1
+                valor_atual: receitaTotal,
+                unidade: 'reais',
+                categoria: 'financeiro',
+                fonte: 'Consolidado',
+                valor_meta: receitaTotal * 1.1,
+                periodo: new Date().toISOString()
               }}
               index={0}
             />
@@ -174,10 +191,12 @@ export default function Dashboard() {
               kpi={{
                 id: 2,
                 nome: 'Lucro Líquido',
-                valor: kpis.lucro_liquido,
-                formato: 'moeda',
-                variacao: kpis.variacao_lucro,
-                meta: kpis.lucro_liquido * 1.15
+                valor_atual: kpis?.lucro_liquido || 0,
+                unidade: 'reais',
+                categoria: 'financeiro',
+                fonte: 'Consolidado',
+                valor_meta: (kpis?.lucro_liquido || 0) * 1.15,
+                periodo: new Date().toISOString()
               }}
               index={1}
             />
@@ -185,10 +204,12 @@ export default function Dashboard() {
               kpi={{
                 id: 3,
                 nome: 'Ticket Médio',
-                valor: kpis.ticket_medio,
-                formato: 'moeda',
-                variacao: 0,
-                meta: kpis.ticket_medio * 1.05
+                valor_atual: kpis?.ticket_medio || 0,
+                unidade: 'reais',
+                categoria: 'comercial',
+                fonte: 'Consolidado',
+                valor_meta: (kpis?.ticket_medio || 0) * 1.05,
+                periodo: new Date().toISOString()
               }}
               index={2}
             />
@@ -196,10 +217,12 @@ export default function Dashboard() {
               kpi={{
                 id: 4,
                 nome: 'Total de Pedidos',
-                valor: kpis.total_pedidos,
-                formato: 'numero',
-                variacao: 0,
-                meta: kpis.total_pedidos * 1.2
+                valor_atual: kpis?.total_pedidos || 0,
+                unidade: 'numero',
+                categoria: 'comercial',
+                fonte: 'Consolidado',
+                valor_meta: (kpis?.total_pedidos || 0) * 1.2,
+                periodo: new Date().toISOString()
               }}
               index={3}
             />
@@ -207,10 +230,12 @@ export default function Dashboard() {
               kpi={{
                 id: 5,
                 nome: 'Clientes Ativos',
-                valor: kpis.total_clientes,
-                formato: 'numero',
-                variacao: 0,
-                meta: kpis.total_clientes * 1.1
+                valor_atual: stats?.total_clientes || 0,
+                unidade: 'numero',
+                categoria: 'comercial',
+                fonte: 'Consolidado',
+                valor_meta: (stats?.total_clientes || 0) * 1.1,
+                periodo: new Date().toISOString()
               }}
               index={4}
             />
@@ -218,10 +243,12 @@ export default function Dashboard() {
               kpi={{
                 id: 6,
                 nome: 'Margem Líquida',
-                valor: margemLiquida,
-                formato: 'percentual',
-                variacao: 0,
-                meta: 35
+                valor_atual: margemLiquida,
+                unidade: 'percentual',
+                categoria: 'margem',
+                fonte: 'Consolidado',
+                valor_meta: 35,
+                periodo: new Date().toISOString()
               }}
               index={5}
             />
@@ -229,84 +256,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Main Content Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-card shadow-sm border p-1">
-          <TabsTrigger 
-            value="consolidado" 
-            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
-          >
-            Visão Consolidada
-          </TabsTrigger>
-          <TabsTrigger 
-            value="graficos"
-            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white"
-          >
-            Análises Gráficas
-          </TabsTrigger>
-        </TabsList>
 
-        <TabsContent value="consolidado" className="space-y-6">
-          {/* Vendas por Filial */}
-          {vendasFilial && vendasFilial.filiais && vendasFilial.filiais.length > 0 && (
-            <div className="bg-card rounded-2xl shadow-lg p-6 border">
-              <h3 className="text-xl font-bold mb-4">Vendas por Filial</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {vendasFilial.filiais.map((filial) => (
-                  <div key={filial.integracao_id} className="p-4 bg-muted/30 rounded-lg">
-                    <p className="font-semibold text-foreground">{filial.nome}</p>
-                    <p className="text-sm text-muted-foreground mb-2">{filial.filial}</p>
-                    <p className="text-2xl font-bold text-green-600">
-                      R$ {filial.total_vendas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {filial.total_pedidos} pedidos • Ticket: R$ {filial.ticket_medio.toFixed(2)}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 pt-4 border-t">
-                <p className="text-lg font-bold">
-                  Total Geral: <span className="text-green-600">
-                    R$ {vendasFilial.total_geral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </span>
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* Timeline de Vendas */}
-          {timeline && timeline.timeline && timeline.timeline.length > 0 && (
-            <div className="bg-card rounded-2xl shadow-lg p-6 border">
-              <h3 className="text-xl font-bold mb-4">Evolução de Vendas (Últimos 12 Meses)</h3>
-              <MargemChart 
-                produtos={timeline.timeline.map(item => ({
-                  mes: item.mes,
-                  total_vendas: item.total_vendas,
-                  total_pedidos: item.total_pedidos,
-                  ticket_medio: item.ticket_medio
-                }))} 
-              />
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="graficos" className="space-y-6">
-          <div className="grid grid-cols-1 gap-6">
-            {timeline && timeline.timeline && timeline.timeline.length > 0 && (
-              <div className="bg-card rounded-2xl shadow-lg p-6 border">
-                <h3 className="text-xl font-bold mb-4">Análise de Vendas</h3>
-                <MargemChart 
-                  produtos={timeline.timeline.map(item => ({
-                    mes: item.mes,
-                    total_vendas: item.total_vendas
-                  }))} 
-                />
-              </div>
-            )}
-          </div>
-        </TabsContent>
-      </Tabs>
 
       {/* Empty State */}
       {!isLoading && (!stats || stats.total_clientes === 0) && (
