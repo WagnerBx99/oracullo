@@ -285,6 +285,16 @@ class ApiClient {
       const query = new URLSearchParams(params).toString();
       return this.request(`/relatorios/resumo-geral${query ? '?' + query : ''}`);
     },
+    
+    faturamentoDiario: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/relatorios/faturamento-diario${query ? '?' + query : ''}`);
+    },
+    
+    fechamentoComissoes: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/relatorios/fechamento-comissoes${query ? '?' + query : ''}`);
+    },
   };
 
   // Produtos

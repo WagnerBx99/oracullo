@@ -28,7 +28,7 @@ router.get('/faturamento-diario', async (req, res) => {
     const query = `
       SELECT 
         DATE(data_pedido) as data,
-        data_json->'cabecalho'->>'codigo_empresa' as codigo_filial,
+        pd.data_json->'cabecalho'->>'codigo_empresa' as codigo_filial,
         SUM(valor_total) as faturamento_dia,
         COUNT(*) as qtd_pedidos
       FROM pedidos
@@ -86,15 +86,24 @@ router.get('/faturamento-diario', async (req, res) => {
     Object.keys(FILIAIS_MAP).forEach(codigo => {
       totaisMensais[FILIAIS_MAP[codigo]] = {
         faturamento_mes: 0,
+        faturamento_hoje: 0,
         qtd_pedidos_mes: 0
       };
     });
+
+    // Data de hoje
+    const hoje = new Date().toISOString().split('T')[0];
 
     Object.values(faturamentoPorDia).forEach(dia => {
       Object.entries(dia.filiais).forEach(([nomeFilial, dados]) => {
         if (totaisMensais[nomeFilial]) {
           totaisMensais[nomeFilial].faturamento_mes += dados.faturamento;
           totaisMensais[nomeFilial].qtd_pedidos_mes += dados.qtd_pedidos;
+          
+          // Se for hoje, adicionar ao faturamento_hoje
+          if (dia.data === hoje) {
+            totaisMensais[nomeFilial].faturamento_hoje += dados.faturamento;
+          }
         }
       });
     });
@@ -154,11 +163,11 @@ router.get('/fechamento-comissoes', async (req, res) => {
     // Query para buscar vendas por marca
     const queryVendas = `
       SELECT 
-        p.marca,
+        p.data_json->>'marca' as marca,
         COUNT(DISTINCT pd.id) as qtd_vendas,
         SUM(pi.quantidade) as qtd_produtos,
         SUM(pi.valor_total) as valor_total,
-        data_json->'cabecalho'->>'codigo_empresa' as codigo_filial
+        pd.data_json->'cabecalho'->>'codigo_empresa' as codigo_filial
       FROM pedidos pd
       JOIN pedido_itens pi ON pd.id = pi.pedido_id
       JOIN produtos p ON pi.produto_id = p.id
@@ -166,7 +175,7 @@ router.get('/fechamento-comissoes', async (req, res) => {
         EXTRACT(YEAR FROM pd.data_pedido) = $1
         AND EXTRACT(MONTH FROM pd.data_pedido) = $2
         AND pd.data_json->'infoCadastro'->>'faturado' = 'S'
-      GROUP BY p.marca, codigo_filial
+      GROUP BY p.data_json->>'marca', codigo_filial
       ORDER BY valor_total DESC
     `;
 

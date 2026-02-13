@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, TrendingUp, Users, DollarSign, AlertCircle } from 'lucide-react';
-import axios from 'axios';
-
-const API_URL = "";
+import { api } from '../api/apiClient';
 
 const RelatoriosDesenvolvimento = () => {
   const [relatorioAtivo, setRelatorioAtivo] = useState('faturamento');
   const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState(null);
   const [dadosFaturamento, setDadosFaturamento] = useState(null);
   const [dadosComissoes, setDadosComissoes] = useState(null);
   const [mesAno, setMesAno] = useState({
@@ -24,13 +23,15 @@ const RelatoriosDesenvolvimento = () => {
 
   const buscarFaturamento = async () => {
     setLoading(true);
+    setErro(null);
     try {
-      const response = await axios.get(`${API_URL}/api/relatorios/faturamento-diario`, {
-        params: { ano: mesAno.ano, mes: mesAno.mes }
-      });
-      setDadosFaturamento(response.data);
+      console.log('[Relatórios] Buscando faturamento...', mesAno);
+      const response = await api.relatorios.faturamentoDiario(mesAno);
+      console.log('[Relatórios] Faturamento recebido:', response);
+      setDadosFaturamento(response);
     } catch (error) {
-      console.error('Erro ao buscar faturamento:', error);
+      console.error('[Relatórios] Erro ao buscar faturamento:', error);
+      setErro('Erro ao carregar faturamento: ' + (error.message || 'Erro desconhecido'));
     } finally {
       setLoading(false);
     }
@@ -38,13 +39,15 @@ const RelatoriosDesenvolvimento = () => {
 
   const buscarComissoes = async () => {
     setLoading(true);
+    setErro(null);
     try {
-      const response = await axios.get(`${API_URL}/api/relatorios/fechamento-comissoes`, {
-        params: { ano: mesAno.ano, mes: mesAno.mes }
-      });
-      setDadosComissoes(response.data);
+      console.log('[Relatórios] Buscando comissões...', mesAno);
+      const response = await api.relatorios.fechamentoComissoes(mesAno);
+      console.log('[Relatórios] Comissões recebidas:', response);
+      setDadosComissoes(response);
     } catch (error) {
-      console.error('Erro ao buscar comissões:', error);
+      console.error('[Relatórios] Erro ao buscar comissões:', error);
+      setErro('Erro ao carregar comissões: ' + (error.message || 'Erro desconhecido'));
     } finally {
       setLoading(false);
     }
@@ -108,6 +111,16 @@ const RelatoriosDesenvolvimento = () => {
           </div>
         </div>
 
+        {erro && (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-6 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-red-400 font-semibold mb-1">Erro ao Carregar Dados</p>
+              <p className="text-red-300/80 text-sm">{erro}</p>
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-12 text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
@@ -163,7 +176,8 @@ const RelatorioFaturamento = ({ dados, formatarMoeda }) => (
           <thead className="bg-slate-700/50">
             <tr>
               <th className="px-6 py-3 text-left text-sm font-semibold text-slate-300">Filial</th>
-              <th className="px-6 py-3 text-right text-sm font-semibold text-slate-300">Faturamento</th>
+              <th className="px-6 py-3 text-right text-sm font-semibold text-slate-300">Faturamento Mensal</th>
+              <th className="px-6 py-3 text-right text-sm font-semibold text-slate-300">Faturamento Hoje</th>
               <th className="px-6 py-3 text-right text-sm font-semibold text-slate-300">Pedidos</th>
             </tr>
           </thead>
@@ -172,6 +186,7 @@ const RelatorioFaturamento = ({ dados, formatarMoeda }) => (
               <tr key={filial} className="hover:bg-slate-700/30">
                 <td className="px-6 py-4 text-white">{filial}</td>
                 <td className="px-6 py-4 text-right text-white font-semibold">{formatarMoeda(d.faturamento_mes)}</td>
+                <td className="px-6 py-4 text-right text-green-400 font-semibold">{formatarMoeda(d.faturamento_hoje || 0)}</td>
                 <td className="px-6 py-4 text-right text-slate-300">{d.qtd_pedidos_mes}</td>
               </tr>
             ))}
