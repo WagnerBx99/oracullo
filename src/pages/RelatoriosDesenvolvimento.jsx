@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, TrendingUp, Users, DollarSign, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3201';
+const API_URL = "";
 
 const RelatoriosDesenvolvimento = () => {
   const [relatorioAtivo, setRelatorioAtivo] = useState('faturamento');
