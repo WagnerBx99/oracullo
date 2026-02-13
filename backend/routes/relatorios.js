@@ -1,348 +1,291 @@
 import express from 'express';
-import { poolAnalitico, poolTransacional, poolGestao } from '../config/databases.js';
+import { pool as poolTransacional } from '../config/database-transacional.js';
 
 const router = express.Router();
 
-/**
- * GET /api/relatorios/vendas-consolidado
- * Retorna vendas consolidadas por estado/filial
- * Query params: data_inicio, data_fim, filial_id (opcional)
- */
-router.get('/vendas-consolidado', async (req, res) => {
+// Mapeamento de códigos OMIE para nomes de filiais
+const FILIAIS_MAP = {
+  '3170227616': 'Curitiba',
+  '7134449262': 'Blumenau',
+  '5846892828': 'Florianópolis',
+  '7134439321': 'Joinville',
+  '9978487136': 'Itajaí',
+  '6340759822': 'Maringá',
+  '11443025164': 'Minas Gerais',
+  '2080955980': 'São Paulo'
+};
+
+// Endpoint: Faturamento Diário Resumido
+router.get('/faturamento-diario', async (req, res) => {
   try {
-    const { data_inicio, data_fim, filial_id } = req.query;
+    const { ano, mes } = req.query;
     
-    // Se não especificar datas, usa o mês atual
-    const hoje = new Date();
-    const inicioMes = data_inicio || new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
-    const fimMes = data_fim || new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split('T')[0];
-    
-    // Buscar vendas por filial
-    let query = `
-      SELECT 
-        v.integracao_id,
-        i.nome as nome_filial,
-        i.filial,
-        i.config->>'estado' as estado,
-        SUM(v.total_vendas) as total_vendas,
-        SUM(v.total_pedidos) as total_pedidos,
-        AVG(v.ticket_medio) as ticket_medio
-      FROM vendas_por_periodo v
-      INNER JOIN dblink(
-        'dbname=oracullo_gestao user=oracullo_user password=oracullo123',
-        'SELECT id, nome, filial, config FROM integracoes'
-      ) AS i(id integer, nome text, filial text, config jsonb)
-      ON v.integracao_id = i.id
-      WHERE v.periodo BETWEEN $1 AND $2
-    `;
-    
-    const params = [inicioMes, fimMes];
-    
-    if (filial_id) {
-      query += ` AND v.integracao_id = $3`;
-      params.push(filial_id);
+    if (!ano || !mes) {
+      return res.status(400).json({ error: 'Ano e mês são obrigatórios' });
     }
-    
-    query += `
-      GROUP BY v.integracao_id, i.nome, i.filial, i.config
-      ORDER BY estado, nome_filial
+
+    // Query para buscar faturamento diário por filial
+    const query = `
+      SELECT 
+        DATE(data_pedido) as data,
+        data_json->'cabecalho'->>'codigo_empresa' as codigo_filial,
+        SUM(valor_total) as faturamento_dia,
+        COUNT(*) as qtd_pedidos
+      FROM pedidos
+      WHERE 
+        EXTRACT(YEAR FROM data_pedido) = $1
+        AND EXTRACT(MONTH FROM data_pedido) = $2
+        AND data_json->'infoCadastro'->>'faturado' = 'S'
+      GROUP BY DATE(data_pedido), codigo_filial
+      ORDER BY data, codigo_filial
     `;
-    
-    const result = await poolAnalitico.query(query, params);
-    
-    // Agrupar por estado
-    const estadosMap = new Map();
-    
-    result.rows.forEach(row => {
-      const estado = row.estado || 'Não Informado';
-      
-      if (!estadosMap.has(estado)) {
-        estadosMap.set(estado, {
-          estado: estado,
-          filiais: [],
-          total_estado: 0
-        });
-      }
-      
-      const estadoData = estadosMap.get(estado);
-      
-      const filialData = {
-        integracao_id: row.integracao_id,
-        nome: row.nome_filial,
-        filial: row.filial,
-        total_vendas: parseFloat(row.total_vendas),
-        total_pedidos: row.total_pedidos,
-        ticket_medio: parseFloat(row.ticket_medio),
-        vendedores: [] // Por enquanto vazio, implementar quando tivermos dados de vendedores
+
+    const result = await poolTransacional.query(query, [ano, mes]);
+
+    // Organizar dados por dia e filial
+    const diasDoMes = new Date(ano, mes, 0).getDate();
+    const faturamentoPorDia = {};
+
+    // Inicializar estrutura
+    for (let dia = 1; dia <= diasDoMes; dia++) {
+      const dataStr = `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+      faturamentoPorDia[dataStr] = {
+        data: dataStr,
+        filiais: {},
+        total_dia: 0
       };
-      
-      estadoData.filiais.push(filialData);
-      estadoData.total_estado += filialData.total_vendas;
-    });
-    
-    const estados = Array.from(estadosMap.values());
-    const totalGeral = estados.reduce((sum, estado) => sum + estado.total_estado, 0);
-    
-    res.json({
-      periodo: {
-        inicio: inicioMes,
-        fim: fimMes
-      },
-      estados: estados,
-      total_geral: totalGeral
-    });
-    
-  } catch (error) {
-    console.error('Erro ao buscar vendas consolidado:', error);
-    res.status(500).json({ error: 'Erro ao buscar vendas consolidado' });
-  }
-});
 
-/**
- * GET /api/relatorios/vendas-trading
- * Retorna vendas de trading/distribuição
- * Query params: data_inicio, data_fim
- */
-router.get('/vendas-trading', async (req, res) => {
-  try {
-    const { data_inicio, data_fim } = req.query;
-    
-    const hoje = new Date();
-    const inicioMes = data_inicio || new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
-    const fimMes = data_fim || new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split('T')[0];
-    
-    // Buscar integrações do tipo 'trading' ou 'distribuicao'
-    const query = `
-      SELECT 
-        v.integracao_id,
-        i.nome as distribuidor,
-        SUM(v.total_vendas) as total_vendas,
-        SUM(v.total_pedidos) as total_pedidos
-      FROM vendas_por_periodo v
-      INNER JOIN dblink(
-        'dbname=oracullo_gestao user=oracullo_user password=oracullo123',
-        'SELECT id, nome FROM integracoes WHERE config->>''tipo'' IN (''trading'', ''distribuicao'')'
-      ) AS i(id integer, nome text)
-      ON v.integracao_id = i.id
-      WHERE v.periodo BETWEEN $1 AND $2
-      GROUP BY v.integracao_id, i.nome
-      ORDER BY total_vendas DESC
-    `;
-    
-    const result = await poolAnalitico.query(query, [inicioMes, fimMes]);
-    
-    const totalTrading = result.rows.reduce((sum, row) => sum + parseFloat(row.total_vendas), 0);
-    
-    res.json({
-      periodo: {
-        inicio: inicioMes,
-        fim: fimMes
-      },
-      distribuidores: result.rows.map(row => ({
-        integracao_id: row.integracao_id,
-        distribuidor: row.distribuidor,
-        total_vendas: parseFloat(row.total_vendas),
-        total_pedidos: row.total_pedidos
-      })),
-      total_trading: totalTrading
-    });
-    
-  } catch (error) {
-    console.error('Erro ao buscar vendas trading:', error);
-    res.status(500).json({ error: 'Erro ao buscar vendas trading' });
-  }
-});
+      // Inicializar cada filial com 0
+      Object.keys(FILIAIS_MAP).forEach(codigo => {
+        faturamentoPorDia[dataStr].filiais[FILIAIS_MAP[codigo]] = {
+          faturamento: 0,
+          qtd_pedidos: 0,
+          codigo_filial: codigo
+        };
+      });
+    }
 
-/**
- * GET /api/relatorios/vendas-por-vendedor
- * Retorna vendas agrupadas por vendedor
- * Query params: data_inicio, data_fim, filial_id (opcional)
- */
-router.get('/vendas-por-vendedor', async (req, res) => {
-  try {
-    const { data_inicio, data_fim, filial_id } = req.query;
-    
-    const hoje = new Date();
-    const inicioMes = data_inicio || new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
-    const fimMes = data_fim || new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split('T')[0];
-    
-    // Por enquanto retorna estrutura vazia
-    // Implementar quando tivermos tabela de vendedores e vendas por vendedor
-    res.json({
-      periodo: {
-        inicio: inicioMes,
-        fim: fimMes
-      },
-      vendedores: [],
-      total: 0,
-      mensagem: 'Dados de vendedores serão implementados quando houver sincronização de pedidos'
-    });
-    
-  } catch (error) {
-    console.error('Erro ao buscar vendas por vendedor:', error);
-    res.status(500).json({ error: 'Erro ao buscar vendas por vendedor' });
-  }
-});
+    // Preencher com dados reais
+    result.rows.forEach(row => {
+      const dataStr = row.data.toISOString().split('T')[0];
+      const nomeFilial = FILIAIS_MAP[row.codigo_filial] || 'Outros';
+      const faturamento = parseFloat(row.faturamento_dia) || 0;
 
-/**
- * GET /api/relatorios/clientes-por-filial
- * Retorna distribuição de clientes por filial
- */
-router.get('/clientes-por-filial', async (req, res) => {
-  try {
-    const query = `
-      SELECT 
-        c.integracao_id,
-        i.nome as nome_filial,
-        i.filial,
-        COUNT(*) as total_clientes,
-        COUNT(*) FILTER (WHERE c.ativo = true) as clientes_ativos
-      FROM clientes c
-      INNER JOIN dblink(
-        'dbname=oracullo_gestao user=oracullo_user password=oracullo123',
-        'SELECT id, nome, filial FROM integracoes'
-      ) AS i(id integer, nome text, filial text)
-      ON c.integracao_id = i.id
-      GROUP BY c.integracao_id, i.nome, i.filial
-      ORDER BY total_clientes DESC
-    `;
-    
-    const result = await poolTransacional.query(query);
-    
-    const totalGeral = result.rows.reduce((sum, row) => sum + parseInt(row.total_clientes), 0);
-    
-    res.json({
-      filiais: result.rows.map(row => ({
-        integracao_id: row.integracao_id,
-        nome: row.nome_filial,
-        filial: row.filial,
-        total_clientes: parseInt(row.total_clientes),
-        clientes_ativos: parseInt(row.clientes_ativos)
-      })),
-      total_geral: totalGeral
-    });
-    
-  } catch (error) {
-    console.error('Erro ao buscar clientes por filial:', error);
-    res.status(500).json({ error: 'Erro ao buscar clientes por filial' });
-  }
-});
-
-/**
- * GET /api/relatorios/produtos-mais-vendidos
- * Retorna produtos mais vendidos no período
- * Query params: data_inicio, data_fim, limite (padrão 20)
- */
-router.get('/produtos-mais-vendidos', async (req, res) => {
-  try {
-    const { data_inicio, data_fim, limite = 20 } = req.query;
-    
-    // Por enquanto retorna produtos cadastrados
-    // Implementar quando tivermos dados de vendas por produto
-    const query = `
-      SELECT 
-        p.id,
-        p.codigo_externo,
-        p.descricao,
-        p.unidade,
-        p.preco_venda,
-        p.custo,
-        i.nome as filial
-      FROM produtos p
-      INNER JOIN dblink(
-        'dbname=oracullo_gestao user=oracullo_user password=oracullo123',
-        'SELECT id, nome FROM integracoes'
-      ) AS i(id integer, nome text)
-      ON p.integracao_id = i.id
-      WHERE p.ativo = true
-      ORDER BY p.descricao
-      LIMIT $1
-    `;
-    
-    const result = await poolTransacional.query(query, [parseInt(limite)]);
-    
-    res.json({
-      limite: parseInt(limite),
-      produtos: result.rows.map(row => ({
-        id: row.id,
-        codigo: row.codigo_externo,
-        descricao: row.descricao,
-        unidade: row.unidade,
-        preco_venda: parseFloat(row.preco_venda || 0),
-        custo: parseFloat(row.custo || 0),
-        filial: row.filial,
-        quantidade_vendida: 0, // Implementar quando houver dados
-        valor_total: 0 // Implementar quando houver dados
-      })),
-      mensagem: 'Dados de vendas por produto serão implementados quando houver sincronização de pedidos'
-    });
-    
-  } catch (error) {
-    console.error('Erro ao buscar produtos mais vendidos:', error);
-    res.status(500).json({ error: 'Erro ao buscar produtos mais vendidos' });
-  }
-});
-
-/**
- * GET /api/relatorios/resumo-geral
- * Retorna resumo geral para relatórios
- * Query params: data_inicio, data_fim
- */
-router.get('/resumo-geral', async (req, res) => {
-  try {
-    const { data_inicio, data_fim } = req.query;
-    
-    const hoje = new Date();
-    const inicioMes = data_inicio || new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
-    const fimMes = data_fim || new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split('T')[0];
-    
-    // Total de vendas no período
-    const vendasQuery = `
-      SELECT 
-        SUM(total_vendas) as total_vendas,
-        SUM(total_pedidos) as total_pedidos,
-        AVG(ticket_medio) as ticket_medio
-      FROM vendas_por_periodo
-      WHERE periodo BETWEEN $1 AND $2
-    `;
-    
-    const vendasResult = await poolAnalitico.query(vendasQuery, [inicioMes, fimMes]);
-    
-    // Total de clientes ativos
-    const clientesResult = await poolTransacional.query(
-      'SELECT COUNT(*) as total FROM clientes WHERE ativo = true'
-    );
-    
-    // Total de produtos ativos
-    const produtosResult = await poolTransacional.query(
-      'SELECT COUNT(*) as total FROM produtos WHERE ativo = true'
-    );
-    
-    // Total de integrações ativas
-    const integracoesResult = await poolGestao.query(
-      'SELECT COUNT(*) as total FROM integracoes WHERE status = \'conectado\''
-    );
-    
-    const vendas = vendasResult.rows[0];
-    
-    res.json({
-      periodo: {
-        inicio: inicioMes,
-        fim: fimMes
-      },
-      resumo: {
-        total_vendas: parseFloat(vendas.total_vendas || 0),
-        total_pedidos: parseInt(vendas.total_pedidos || 0),
-        ticket_medio: parseFloat(vendas.ticket_medio || 0),
-        total_clientes: parseInt(clientesResult.rows[0].total),
-        total_produtos: parseInt(produtosResult.rows[0].total),
-        integracoes_ativas: parseInt(integracoesResult.rows[0].total)
+      if (faturamentoPorDia[dataStr]) {
+        faturamentoPorDia[dataStr].filiais[nomeFilial] = {
+          faturamento: faturamento,
+          qtd_pedidos: parseInt(row.qtd_pedidos),
+          codigo_filial: row.codigo_filial
+        };
+        faturamentoPorDia[dataStr].total_dia += faturamento;
       }
     });
-    
+
+    // Calcular totais mensais por filial
+    const totaisMensais = {};
+    Object.keys(FILIAIS_MAP).forEach(codigo => {
+      totaisMensais[FILIAIS_MAP[codigo]] = {
+        faturamento_mes: 0,
+        qtd_pedidos_mes: 0
+      };
+    });
+
+    Object.values(faturamentoPorDia).forEach(dia => {
+      Object.entries(dia.filiais).forEach(([nomeFilial, dados]) => {
+        if (totaisMensais[nomeFilial]) {
+          totaisMensais[nomeFilial].faturamento_mes += dados.faturamento;
+          totaisMensais[nomeFilial].qtd_pedidos_mes += dados.qtd_pedidos;
+        }
+      });
+    });
+
+    // Adicionar dados de exemplo para Trading e ATF 6000 PRO
+    const dadosExemplo = {
+      trading: {
+        'Lucara (PR)': { faturamento_mes: 25000, qtd_pedidos: 15, exemplo: true },
+        'Bravo (MT)': { faturamento_mes: 18000, qtd_pedidos: 12, exemplo: true },
+        'Super (RS)': { faturamento_mes: 42000, qtd_pedidos: 28, exemplo: true },
+        'Viccalub (SP)': { faturamento_mes: 31000, qtd_pedidos: 20, exemplo: true },
+        'Outros': { faturamento_mes: 15000, qtd_pedidos: 10, exemplo: true }
+      },
+      atf6000pro: {
+        faturamento_mes: 125000,
+        qtd_maquinas: 12,
+        exemplo: true
+      }
+    };
+
+    // Calcular total geral
+    const totalDistribuicao = Object.values(totaisMensais).reduce((sum, f) => sum + f.faturamento_mes, 0);
+    const totalTrading = Object.values(dadosExemplo.trading).reduce((sum, f) => sum + f.faturamento_mes, 0);
+    const totalGeral = totalDistribuicao + totalTrading + dadosExemplo.atf6000pro.faturamento_mes;
+
+    res.json({
+      ano: parseInt(ano),
+      mes: parseInt(mes),
+      dias: Object.values(faturamentoPorDia),
+      totais_mensais: {
+        distribuicao: totaisMensais,
+        trading: dadosExemplo.trading,
+        atf6000pro: dadosExemplo.atf6000pro,
+        total_distribuicao: totalDistribuicao,
+        total_trading: totalTrading,
+        total_atf6000pro: dadosExemplo.atf6000pro.faturamento_mes,
+        total_geral: totalGeral
+      },
+      filiais_map: FILIAIS_MAP
+    });
+
   } catch (error) {
-    console.error('Erro ao buscar resumo geral:', error);
-    res.status(500).json({ error: 'Erro ao buscar resumo geral' });
+    console.error('Erro ao buscar faturamento diário:', error);
+    res.status(500).json({ error: 'Erro ao buscar faturamento diário', details: error.message });
+  }
+});
+
+// Endpoint: Fechamento de Comissões
+router.get('/fechamento-comissoes', async (req, res) => {
+  try {
+    const { ano, mes } = req.query;
+    
+    if (!ano || !mes) {
+      return res.status(400).json({ error: 'Ano e mês são obrigatórios' });
+    }
+
+    // Query para buscar vendas por marca
+    const queryVendas = `
+      SELECT 
+        p.marca,
+        COUNT(DISTINCT pd.id) as qtd_vendas,
+        SUM(pi.quantidade) as qtd_produtos,
+        SUM(pi.valor_total) as valor_total,
+        data_json->'cabecalho'->>'codigo_empresa' as codigo_filial
+      FROM pedidos pd
+      JOIN pedido_itens pi ON pd.id = pi.pedido_id
+      JOIN produtos p ON pi.produto_id = p.id
+      WHERE 
+        EXTRACT(YEAR FROM pd.data_pedido) = $1
+        AND EXTRACT(MONTH FROM pd.data_pedido) = $2
+        AND pd.data_json->'infoCadastro'->>'faturado' = 'S'
+      GROUP BY p.marca, codigo_filial
+      ORDER BY valor_total DESC
+    `;
+
+    const resultVendas = await poolTransacional.query(queryVendas, [ano, mes]);
+
+    // Vendedores de exemplo (baseado no Excel)
+    const vendedoresExemplo = [
+      { 
+        nome: 'Schirlley Raupp Farinhas',
+        regiao: 'Região Florianópolis',
+        filial: 'Florianópolis',
+        tipo: 'INTERNO',
+        codigo_filial: '5846892828'
+      },
+      { 
+        nome: 'Isaac Quadros',
+        regiao: 'Região Blumenau',
+        filial: 'Blumenau',
+        tipo: 'EXTERNO',
+        codigo_filial: '7134449262'
+      },
+      { 
+        nome: 'Kailany Cristina',
+        regiao: 'Região Campo Gerais',
+        filial: 'Curitiba',
+        tipo: 'INTERNO',
+        codigo_filial: '3170227616'
+      },
+      { 
+        nome: 'João Otavio de Souza Junior',
+        regiao: 'Região Sul Curitiba',
+        filial: 'Curitiba',
+        tipo: 'INTERNO',
+        codigo_filial: '3170227616'
+      },
+      { 
+        nome: 'Wagner Catão',
+        regiao: 'Região Oeste (Gov. Valadares)',
+        filial: 'Minas Gerais',
+        tipo: 'EXTERNO',
+        codigo_filial: '11443025164'
+      }
+    ];
+
+    // Organizar vendas por filial e marca
+    const vendasPorFilial = {};
+    resultVendas.rows.forEach(row => {
+      const nomeFilial = FILIAIS_MAP[row.codigo_filial] || 'Outros';
+      if (!vendasPorFilial[nomeFilial]) {
+        vendasPorFilial[nomeFilial] = {
+          total_vendido: 0,
+          marcas: {}
+        };
+      }
+
+      const marca = row.marca || 'SEM MARCA';
+      if (!vendasPorFilial[nomeFilial].marcas[marca]) {
+        vendasPorFilial[nomeFilial].marcas[marca] = {
+          qtd_vendas: 0,
+          qtd_produtos: 0,
+          valor_total: 0
+        };
+      }
+
+      vendasPorFilial[nomeFilial].marcas[marca].qtd_vendas += parseInt(row.qtd_vendas);
+      vendasPorFilial[nomeFilial].marcas[marca].qtd_produtos += parseFloat(row.qtd_produtos);
+      vendasPorFilial[nomeFilial].marcas[marca].valor_total += parseFloat(row.valor_total);
+      vendasPorFilial[nomeFilial].total_vendido += parseFloat(row.valor_total);
+    });
+
+    // Atribuir vendas aos vendedores de exemplo
+    const resumoVendedores = vendedoresExemplo.map(vendedor => {
+      const vendasFilial = vendasPorFilial[vendedor.filial] || { total_vendido: 0, marcas: {} };
+      
+      // Metas de exemplo por marca
+      const metasPorMarca = {
+        'MANNOL': { meta: 240000, comissao: 0.01, premio: 0.02 },
+        'LUBEGARD': { meta: 75000, comissao: 0.01, premio: 0.04 },
+        'THE EAGLE': { meta: 30000, comissao: 0.01, premio: 0.04 },
+        'RAVENOL': { meta: 50000, comissao: 0.01, premio: 0.04 }
+      };
+
+      const vendasPorMarca = {};
+      Object.entries(vendasFilial.marcas).forEach(([marca, dados]) => {
+        const metaMarca = metasPorMarca[marca] || { meta: 10000, comissao: 0.01, premio: 0.02 };
+        const percentualAtingido = (dados.valor_total / metaMarca.meta) * 100;
+        const comissaoCalculada = dados.valor_total * metaMarca.comissao;
+
+        vendasPorMarca[marca] = {
+          ...dados,
+          meta: metaMarca.meta,
+          percentual_atingido: percentualAtingido,
+          comissao_percentual: metaMarca.comissao,
+          comissao_valor: comissaoCalculada,
+          exemplo_meta: true
+        };
+      });
+
+      return {
+        ...vendedor,
+        total_vendido: vendasFilial.total_vendido,
+        vendas_por_marca: vendasPorMarca,
+        comissao_total: Object.values(vendasPorMarca).reduce((sum, m) => sum + m.comissao_valor, 0),
+        exemplo: true
+      };
+    });
+
+    res.json({
+      ano: parseInt(ano),
+      mes: parseInt(mes),
+      vendedores: resumoVendedores,
+      vendas_por_filial: vendasPorFilial,
+      filiais_map: FILIAIS_MAP,
+      aviso: 'Dados de vendedores, metas e comissões são exemplos fictícios'
+    });
+
+  } catch (error) {
+    console.error('Erro ao buscar fechamento de comissões:', error);
+    res.status(500).json({ error: 'Erro ao buscar fechamento de comissões', details: error.message });
   }
 });
 
