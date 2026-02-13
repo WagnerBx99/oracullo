@@ -1,5 +1,5 @@
 import express from 'express';
-import { pool as poolTransacional } from '../config/database-transacional.js';
+import { poolTransacional } from '../config/databases.js';
 
 const router = express.Router();
 
