@@ -26,8 +26,8 @@ router.post('/sync', async (req, res) => {
     // Configurar headers para API do MERCOS
     const headers = {
       'Content-Type': 'application/json',
-      'token': api_key,
-      'companyToken': company_token
+      'ApplicationToken': api_key,
+      'CompanyToken': company_token
     };
 
     // Definir endpoint
@@ -115,8 +115,8 @@ router.post('/test', async (req, res) => {
 
     const headers = {
       'Content-Type': 'application/json',
-      'token': api_key,
-      'companyToken': company_token
+      'ApplicationToken': api_key,
+      'CompanyToken': company_token
     };
 
     // Testar endpoint de status

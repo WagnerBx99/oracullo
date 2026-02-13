@@ -58,13 +58,13 @@ router.get('/:id', async (req, res) => {
     const permissoesResult = await poolGestao.query(`
       SELECT 
         pp.permissao_id,
-        perm.recurso,
-        perm.acao,
+        perm.modulo,
+        perm.chave,
         perm.descricao
       FROM perfil_permissoes pp
       JOIN permissoes perm ON pp.permissao_id = perm.id
       WHERE pp.perfil_id = $1
-      ORDER BY perm.recurso, perm.acao
+      ORDER BY perm.modulo, perm.chave
     `, [id]);
 
     perfil.permissoes = permissoesResult.rows;
@@ -85,11 +85,11 @@ router.get('/sistema/permissoes', async (req, res) => {
     const result = await poolGestao.query(`
       SELECT 
         id,
-        recurso,
-        acao,
+        modulo,
+        chave,
         descricao
       FROM permissoes
-      ORDER BY recurso, acao
+      ORDER BY modulo, acao
     `);
 
     res.json(result.rows);

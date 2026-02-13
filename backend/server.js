@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import mercosRoutes from './routes/mercos.js';
 import omieRoutes from './routes/omie.js';
+import omieInternalRoutes from './routes/omie-internal.js';
 import comercialRoutes from "./routes/comercial.js";
 import usuariosRoutes from './routes/usuarios.js';
 import perfisRoutes from './routes/perfis.js';
@@ -30,6 +31,7 @@ app.use(cookieParser());
 
 // Rotas públicas
 app.use('/api/auth', authRoutes);
+app.use('/api/omie-internal', omieInternalRoutes); // Rotas internas sem autenticação
 
 // Rotas protegidas (requerem autenticação)
 app.use('/api/integracoes', authenticate, integracoesRoutes);

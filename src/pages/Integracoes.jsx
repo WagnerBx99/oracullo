@@ -84,6 +84,9 @@ export default function Integracoes() {
           tipo: 'clientes'
         });
         
+        // Aguardar 10 segundos para evitar rate limit
+        await new Promise(resolve => setTimeout(resolve, 10000));
+        
         // Sincroniza produtos
         const produtosResult = await api.mercos.sync(integracao.id, {
           api_url: integracao.api_url,
