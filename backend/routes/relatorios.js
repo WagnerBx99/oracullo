@@ -29,13 +29,12 @@ router.get('/faturamento-diario', async (req, res) => {
       SELECT 
         DATE(p.data_pedido) as data,
         p.data_json->'cabecalho'->>'codigo_empresa' as codigo_filial,
-        SUM(p.valor_total) as faturamento_dia,
+        SUM((p.data_json->'total_pedido'->>'valor_total_pedido')::numeric) as faturamento_dia,
         COUNT(*) as qtd_pedidos
       FROM pedidos p
       WHERE 
         EXTRACT(YEAR FROM p.data_pedido) = $1
         AND EXTRACT(MONTH FROM p.data_pedido) = $2
-        AND p.data_json->'infoCadastro'->>'faturado' = 'S'
       GROUP BY DATE(p.data_pedido), codigo_filial
       ORDER BY data, codigo_filial
     `;

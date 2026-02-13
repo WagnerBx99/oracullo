@@ -191,6 +191,20 @@ const RelatorioFaturamento = ({ dados, formatarMoeda }) => (
               </tr>
             ))}
           </tbody>
+          <tfoot className="bg-slate-700/70 border-t-2 border-orange-500">
+            <tr>
+              <td className="px-6 py-4 text-white font-bold text-lg">TOTAL</td>
+              <td className="px-6 py-4 text-right text-white font-bold text-lg">
+                {formatarMoeda(Object.values(dados.totais_mensais.distribuicao).reduce((sum, d) => sum + d.faturamento_mes, 0))}
+              </td>
+              <td className="px-6 py-4 text-right text-green-400 font-bold text-lg">
+                {formatarMoeda(Object.values(dados.totais_mensais.distribuicao).reduce((sum, d) => sum + (d.faturamento_hoje || 0), 0))}
+              </td>
+              <td className="px-6 py-4 text-right text-slate-300 font-bold text-lg">
+                {Object.values(dados.totais_mensais.distribuicao).reduce((sum, d) => sum + d.qtd_pedidos_mes, 0)}
+              </td>
+            </tr>
+          </tfoot>
         </table>
       </div>
     </div>
