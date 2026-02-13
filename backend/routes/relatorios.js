@@ -27,16 +27,16 @@ router.get('/faturamento-diario', async (req, res) => {
     // Query para buscar faturamento diário por filial
     const query = `
       SELECT 
-        DATE(data_pedido) as data,
-        pd.data_json->'cabecalho'->>'codigo_empresa' as codigo_filial,
-        SUM(valor_total) as faturamento_dia,
+        DATE(p.data_pedido) as data,
+        p.data_json->'cabecalho'->>'codigo_empresa' as codigo_filial,
+        SUM(p.valor_total) as faturamento_dia,
         COUNT(*) as qtd_pedidos
-      FROM pedidos
+      FROM pedidos p
       WHERE 
-        EXTRACT(YEAR FROM data_pedido) = $1
-        AND EXTRACT(MONTH FROM data_pedido) = $2
-        AND data_json->'infoCadastro'->>'faturado' = 'S'
-      GROUP BY DATE(data_pedido), codigo_filial
+        EXTRACT(YEAR FROM p.data_pedido) = $1
+        AND EXTRACT(MONTH FROM p.data_pedido) = $2
+        AND p.data_json->'infoCadastro'->>'faturado' = 'S'
+      GROUP BY DATE(p.data_pedido), codigo_filial
       ORDER BY data, codigo_filial
     `;
 
