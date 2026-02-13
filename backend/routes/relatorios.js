@@ -8,8 +8,8 @@ const FILIAIS_MAP = {
   '3170227616': 'Curitiba',
   '7134449262': 'Blumenau',
   '5846892828': 'Florianópolis',
-  '7134439321': 'Joinville',
-  '9978487136': 'Itajaí',
+  '7134439321': 'Sorocaba',
+  '9978487136': 'Brasília',
   '6340759822': 'Maringá',
   '11443025164': 'Minas Gerais',
   '2080955980': 'São Paulo'
