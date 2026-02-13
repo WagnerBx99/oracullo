@@ -89,7 +89,11 @@ export default function Layout({ children, currentPageName }) {
     { 
       label: 'Relatórios', 
       icon: FileText, 
-      page: 'Relatorios'
+      page: 'Relatorios',
+      submenu: [
+        { label: 'Relatórios Atuais', page: 'Relatorios' },
+        { label: 'Em Desenvolvimento', page: 'RelatoriosDesenvolvimento' }
+      ]
     },
     { 
       label: 'Administração', 

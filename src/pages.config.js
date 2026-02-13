@@ -11,8 +11,8 @@ import Manipulaveis from './pages/Manipulaveis';
 import ManualUsuario from './pages/ManualUsuario';
 import Operacional from './pages/Operacional';
 import Relatorios from './pages/Relatorios';
+import RelatoriosDesenvolvimento from './pages/RelatoriosDesenvolvimento';
 import __Layout from './Layout.jsx';
-
 
 export const PAGES = {
     "BancoDados": BancoDados,
@@ -28,6 +28,7 @@ export const PAGES = {
     "ManualUsuario": ManualUsuario,
     "Operacional": Operacional,
     "Relatorios": Relatorios,
+    "RelatoriosDesenvolvimento": RelatoriosDesenvolvimento,
 }
 
 export const pagesConfig = {
