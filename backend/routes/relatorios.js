@@ -3,16 +3,16 @@ import { poolTransacional } from '../config/databases.js';
 
 const router = express.Router();
 
-// Mapeamento de códigos OMIE para nomes de filiais
+// Mapeamento de códigos OMIE para nomes de filiais (baseado em integracao_id)
 const FILIAIS_MAP = {
-  '3170227616': 'Curitiba',
   '7134449262': 'Blumenau',
-  '5846892828': 'Florianópolis',
-  '7134439321': 'Sorocaba',
-  '9978487136': 'Brasília',
-  '6340759822': 'Maringá',
-  '11443025164': 'Minas Gerais',
-  '2080955980': 'São Paulo'
+  '6340759822': 'Brasília',
+  '5846892828': 'Curitiba',
+  '3170227616': 'Florianópolis',
+  '7134439321': 'Maringá',
+  '9978487136': 'Minas Gerais',
+  '11443025164': 'São Paulo',
+  '2080955980': 'Sorocaba'
 };
 
 // Endpoint: Faturamento Diário Resumido
