@@ -16,6 +16,7 @@ import diretoriaRoutes from './routes/diretoria.js';
 import produtosRoutes from './routes/produtos.js';
 import operacionalRoutes from './routes/operacional.js';
 import authRoutes from './routes/auth.js';
+import reportsRoutes from './routes/reports.js';
 import { authenticate } from './middleware/auth.js';
 import { testConnections } from './config/databases.js';
 
@@ -44,6 +45,7 @@ app.use('/api/clientes', authenticate, clientesRoutes);
 app.use('/api/dashboard', authenticate, dashboardRoutes);
 app.use('/api/relatorios', authenticate, relatoriosRoutes);
 app.use('/api/diretoria', authenticate, diretoriaRoutes);
+app.use('/api/reports', authenticate, reportsRoutes);
 app.use('/api/produtos', authenticate, produtosRoutes);
 app.use("/api/operacional", operacionalRoutes);
 

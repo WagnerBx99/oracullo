@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom';
 import { createPageUrl } from './utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Database, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Database,
+  Settings,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -26,7 +26,7 @@ export default function Layout({ children, currentPageName }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const auth = useAuth();
-  const { user: authUser, logout } = auth || { user: null, logout: () => {} };
+  const { user: authUser, logout } = auth || { user: null, logout: () => { } };
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [theme, setTheme] = useState(() => {
@@ -51,14 +51,14 @@ export default function Layout({ children, currentPageName }) {
   }, [authUser]);
 
   const menuItems = [
-    { 
-      label: 'Consolidado', 
-      icon: LayoutDashboard, 
+    {
+      label: 'Consolidado',
+      icon: LayoutDashboard,
       page: 'Dashboard'
     },
-    { 
-      label: 'Diretoria', 
-      icon: Layers, 
+    {
+      label: 'Diretoria',
+      icon: Layers,
       page: 'Diretoria',
       submenu: [
         { label: 'Dashboard Diretoria', page: 'Diretoria' },
@@ -66,19 +66,23 @@ export default function Layout({ children, currentPageName }) {
         { label: 'Ajuste de Margem', page: 'Manipulaveis' }
       ]
     },
-    { 
-      label: 'Comercial', 
-      icon: Users, 
-      page: 'Comercial'
+    {
+      label: 'Comercial',
+      icon: Users,
+      page: 'Comercial',
+      submenu: [
+        { label: 'Dashboard Comercial', page: 'Comercial' },
+        { label: 'Faturamento por Estado', page: 'faturamento_estado' }
+      ]
     },
-    { 
-      label: 'Operacional', 
-      icon: Settings, 
+    {
+      label: 'Operacional',
+      icon: Settings,
       page: 'Operacional'
     },
-    { 
-      label: 'Integrações', 
-      icon: Database, 
+    {
+      label: 'Integrações',
+      icon: Database,
       page: 'Integracoes',
       submenu: [
         { label: 'ERP (OMIE/WK)', page: 'Integracoes' },
@@ -86,27 +90,28 @@ export default function Layout({ children, currentPageName }) {
         { label: 'Input Manual', page: 'Formularios' }
       ]
     },
-    { 
-      label: 'Relatórios', 
-      icon: FileText, 
+    {
+      label: 'Relatórios Antigos',
+      icon: FileText,
       page: 'Relatorios',
       submenu: [
         { label: 'Relatórios Atuais', page: 'Relatorios' },
         { label: 'Em Desenvolvimento', page: 'RelatoriosDesenvolvimento' }
       ]
     },
-    { 
-      label: 'Administração', 
-      icon: Settings, 
+
+    {
+      label: 'Administração',
+      icon: Settings,
       page: 'Configuracoes',
       submenu: [
         { label: 'Usuários', page: 'Configuracoes' },
         { label: 'Log de Atividades', page: 'LogAtividades' }
       ]
     },
-    { 
-      label: 'Manual do Usuário', 
-      icon: FileText, 
+    {
+      label: 'Manual do Usuário',
+      icon: FileText,
       page: 'ManualUsuario'
     }
   ];
@@ -122,7 +127,7 @@ export default function Layout({ children, currentPageName }) {
       <div className="p-6 border-b border-slate-700/50">
         <div className="flex items-center gap-3">
           <div className="relative w-10 h-10">
-            <img 
+            <img
               src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69409d4cc6151ad10170675e/048d0a939_ImagemdoWhatsAppde2025-12-15s214435_49707b5a.jpg"
               alt="Pecmotors"
               className="w-full h-full object-contain"
@@ -144,16 +149,16 @@ export default function Layout({ children, currentPageName }) {
       {/* Navigation */}
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         {menuItems.map((item) => {
-          const isActive = currentPageName === item.page || 
+          const isActive = currentPageName === item.page ||
             item.submenu?.some(sub => currentPageName === sub.page);
-          
+
           return (
             <div key={item.page}>
               <Link to={createPageUrl(item.page)}>
                 <div className={`
                   flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
-                  ${isActive 
-                    ? 'bg-gradient-to-r from-[#135670] to-[#ff5c00] text-white shadow-lg' 
+                  ${isActive
+                    ? 'bg-gradient-to-r from-[#135670] to-[#ff5c00] text-white shadow-lg'
                     : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
                   }
                 `}>
@@ -163,7 +168,7 @@ export default function Layout({ children, currentPageName }) {
                   )}
                 </div>
               </Link>
-              
+
               {!collapsed && item.submenu && isActive && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
@@ -174,8 +179,8 @@ export default function Layout({ children, currentPageName }) {
                     <Link key={sub.page} to={createPageUrl(sub.page)}>
                       <div className={`
                         px-4 py-2 rounded-lg text-sm transition-colors
-                        ${currentPageName === sub.page 
-                          ? 'text-[#ff5c00] bg-[#ff5c00]/10 font-medium' 
+                        ${currentPageName === sub.page
+                          ? 'text-[#ff5c00] bg-[#ff5c00]/10 font-medium'
                           : 'text-slate-400 hover:text-white hover:bg-slate-700/30'
                         }
                       `}>
@@ -203,7 +208,7 @@ export default function Layout({ children, currentPageName }) {
             {!collapsed && <span>{theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}</span>}
           </Button>
         </div>
-        
+
         <div className="p-4 border-t border-slate-700/50">
           <div className={`flex items-center gap-3 ${collapsed ? 'justify-center' : ''}`}>
             <Avatar className="w-10 h-10 border-2 border-[#ff5c00]">
@@ -220,9 +225,9 @@ export default function Layout({ children, currentPageName }) {
               </div>
             )}
             {!collapsed && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="text-slate-400 hover:text-white hover:bg-slate-700"
                 onClick={handleLogout}
               >
@@ -261,7 +266,7 @@ export default function Layout({ children, currentPageName }) {
           {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </Button>
         <div className="flex items-center gap-2 ml-4">
-          <img 
+          <img
             src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69409d4cc6151ad10170675e/048d0a939_ImagemdoWhatsAppde2025-12-15s214435_49707b5a.jpg"
             alt="Pecmotors"
             className="w-6 h-6 object-contain"
@@ -299,7 +304,7 @@ export default function Layout({ children, currentPageName }) {
       </AnimatePresence>
 
       {/* Desktop Sidebar */}
-      <aside 
+      <aside
         className={`
           hidden lg:block fixed left-0 top-0 bottom-0 bg-slate-800 z-30 transition-all duration-300
           ${collapsed ? 'w-20' : 'w-72'}
@@ -309,7 +314,7 @@ export default function Layout({ children, currentPageName }) {
       </aside>
 
       {/* Main Content */}
-      <main 
+      <main
         className={`
           transition-all duration-300 min-h-screen
           pt-16 lg:pt-0

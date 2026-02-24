@@ -12,6 +12,7 @@ import ManualUsuario from './pages/ManualUsuario';
 import Operacional from './pages/Operacional';
 import Relatorios from './pages/Relatorios';
 import RelatoriosDesenvolvimento from './pages/RelatoriosDesenvolvimento';
+import FaturamentoEstado from './pages/FaturamentoEstado';
 import __Layout from './Layout.jsx';
 
 export const PAGES = {
@@ -27,8 +28,8 @@ export const PAGES = {
     "Manipulaveis": Manipulaveis,
     "ManualUsuario": ManualUsuario,
     "Operacional": Operacional,
-    "Relatorios": Relatorios,
     "RelatoriosDesenvolvimento": RelatoriosDesenvolvimento,
+    "faturamento_estado": FaturamentoEstado,
 }
 
 export const pagesConfig = {

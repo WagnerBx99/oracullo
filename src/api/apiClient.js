@@ -29,7 +29,7 @@ class ApiClient {
 
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
-    
+
     const config = {
       ...options,
       headers: {
@@ -45,7 +45,7 @@ class ApiClient {
 
     try {
       const response = await fetch(url, config);
-      
+
       // Se receber 401 e tiver refresh token, tentar renovar
       if (response.status === 401 && this.refreshToken && !options.skipAuth) {
         const refreshed = await this.auth.refresh();
@@ -58,7 +58,7 @@ class ApiClient {
           }
         }
       }
-      
+
       if (!response.ok) {
         const error = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
         throw new Error(error.error || `HTTP ${response.status}`);
@@ -74,19 +74,19 @@ class ApiClient {
   // Integrações
   integracoes = {
     list: () => this.request('/integracoes'),
-    
+
     get: (id) => this.request(`/integracoes/${id}`),
-    
+
     create: (data) => this.request('/integracoes', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-    
+
     update: (id, data) => this.request(`/integracoes/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
-    
+
     delete: (id) => this.request(`/integracoes/${id}`, {
       method: 'DELETE',
     }),
@@ -106,7 +106,7 @@ class ApiClient {
       }
       return result;
     },
-    
+
     login: async (data) => {
       const result = await this.request('/auth/login', {
         method: 'POST',
@@ -119,7 +119,7 @@ class ApiClient {
       }
       return result;
     },
-    
+
     refresh: async () => {
       try {
         const result = await this.request('/auth/refresh', {
@@ -138,7 +138,7 @@ class ApiClient {
         return false;
       }
     },
-    
+
     logout: async () => {
       try {
         await this.request('/auth/logout', {
@@ -151,9 +151,9 @@ class ApiClient {
         this.clearTokens();
       }
     },
-    
+
     me: () => this.request('/auth/me'),
-    
+
     isAuthenticated: () => this.isAuthenticated(),
   };
 
@@ -163,7 +163,7 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify({ ...data, integracaoId }),
     }),
-    
+
     test: (data) => this.request('/mercos/test', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -173,23 +173,23 @@ class ApiClient {
   // Usuários
   usuarios = {
     list: () => this.request('/usuarios'),
-    
+
     get: (id) => this.request(`/usuarios/${id}`),
-    
+
     create: (data) => this.request('/usuarios', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-    
+
     update: (id, data) => this.request(`/usuarios/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
-    
+
     delete: (id) => this.request(`/usuarios/${id}`, {
       method: 'DELETE',
     }),
-    
+
     convidar: (data) => this.request('/usuarios/convidar', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -199,23 +199,23 @@ class ApiClient {
   // Perfis
   perfis = {
     list: () => this.request('/perfis'),
-    
+
     get: (id) => this.request(`/perfis/${id}`),
-    
+
     create: (data) => this.request('/perfis', {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-    
+
     update: (id, data) => this.request(`/perfis/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     }),
-    
+
     delete: (id) => this.request(`/perfis/${id}`, {
       method: 'DELETE',
     }),
-    
+
     permissoes: () => this.request('/perfis/sistema/permissoes'),
   };
 
@@ -225,7 +225,7 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify({ ...data, integracaoId }),
     }),
-    
+
     test: (data) => this.request('/omie/test', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -238,19 +238,19 @@ class ApiClient {
       const query = new URLSearchParams(params).toString();
       return this.request(`/dashboard/kpis${query ? '?' + query : ''}`);
     },
-    
+
     vendasPorFilial: (params) => {
       const query = new URLSearchParams(params).toString();
       return this.request(`/dashboard/vendas-por-filial${query ? '?' + query : ''}`);
     },
-    
+
     stats: () => this.request('/dashboard/stats'),
-    
+
     vendasTimeline: (params) => {
       const query = new URLSearchParams(params).toString();
       return this.request(`/dashboard/vendas-timeline${query ? '?' + query : ''}`);
     },
-    
+
     topClientes: (params) => {
       const query = new URLSearchParams(params).toString();
       return this.request(`/dashboard/top-clientes${query ? '?' + query : ''}`);
@@ -263,34 +263,34 @@ class ApiClient {
       const query = new URLSearchParams(params).toString();
       return this.request(`/relatorios/vendas-consolidado${query ? '?' + query : ''}`);
     },
-    
+
     vendasTrading: (params) => {
       const query = new URLSearchParams(params).toString();
       return this.request(`/relatorios/vendas-trading${query ? '?' + query : ''}`);
     },
-    
+
     vendasPorVendedor: (params) => {
       const query = new URLSearchParams(params).toString();
       return this.request(`/relatorios/vendas-por-vendedor${query ? '?' + query : ''}`);
     },
-    
+
     clientesPorFilial: () => this.request('/relatorios/clientes-por-filial'),
-    
+
     produtosMaisVendidos: (params) => {
       const query = new URLSearchParams(params).toString();
       return this.request(`/relatorios/produtos-mais-vendidos${query ? '?' + query : ''}`);
     },
-    
+
     resumoGeral: (params) => {
       const query = new URLSearchParams(params).toString();
       return this.request(`/relatorios/resumo-geral${query ? '?' + query : ''}`);
     },
-    
+
     faturamentoDiario: (params) => {
       const query = new URLSearchParams(params).toString();
       return this.request(`/relatorios/faturamento-diario${query ? '?' + query : ''}`);
     },
-    
+
     fechamentoComissoes: (params) => {
       const query = new URLSearchParams(params).toString();
       return this.request(`/relatorios/fechamento-comissoes${query ? '?' + query : ''}`);
@@ -300,29 +300,43 @@ class ApiClient {
   // Produtos
   produtos = {
     list: () => this.request('/produtos'),
-    
+
     stats: () => this.request('/produtos/stats'),
+  };
+
+  // Reports
+  reports = {
+    states: () => this.request('/reports/states'),
+    sales: (state, params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/reports/${state}/sales${query ? '?' + query : ''}`);
+    },
+    filters: (state) => this.request(`/reports/${state}/sales/filters`),
+    exportUrl: (state, params) => {
+      const query = new URLSearchParams(params).toString();
+      return `${this.baseURL}/reports/${state}/sales/export${query ? '?' + query : ''}`;
+    }
   };
 
   // Diretoria
   diretoria = {
     kpis: () => this.request('/diretoria/kpis'),
-    
+
     faturamentoMensal: (params) => {
       const query = new URLSearchParams(params).toString();
       return this.request(`/diretoria/faturamento-mensal${query ? '?' + query : ''}`);
     },
-    
+
     comparativoTrimestral: (params) => {
       const query = new URLSearchParams(params).toString();
       return this.request(`/diretoria/comparativo-trimestral${query ? '?' + query : ''}`);
     },
-    
+
     distribuicaoReceita: (params) => {
       const query = new URLSearchParams(params).toString();
       return this.request(`/diretoria/distribuicao-receita${query ? '?' + query : ''}`);
     },
-    
+
     performance: () => this.request('/diretoria/performance'),
   };
 
@@ -332,22 +346,22 @@ class ApiClient {
       const query = new URLSearchParams(params).toString();
       return this.request(`/comercial/kpis${query ? '?' + query : ''}`);
     },
-    
+
     vendasMensais: (params) => {
       const query = new URLSearchParams(params).toString();
       return this.request(`/comercial/vendas-mensais${query ? '?' + query : ''}`);
     },
-    
+
     pipeline: (params) => {
       const query = new URLSearchParams(params).toString();
       return this.request(`/comercial/pipeline${query ? '?' + query : ''}`);
     },
-    
+
     topProdutos: (params) => {
       const query = new URLSearchParams(params).toString();
       return this.request(`/comercial/top-produtos${query ? '?' + query : ''}`);
     },
-    
+
     vendedores: (params) => {
       const query = new URLSearchParams(params).toString();
       return this.request(`/comercial/vendedores${query ? '?' + query : ''}`);
@@ -360,17 +374,17 @@ class ApiClient {
       const query = new URLSearchParams(params).toString();
       return this.request(`/operacional/kpis${query ? '?' + query : ''}`);
     },
-    
+
     producaoSemanal: (params) => {
       const query = new URLSearchParams(params).toString();
       return this.request(`/operacional/producao-semanal${query ? '?' + query : ''}`);
     },
-    
+
     entregasPeriodo: (params) => {
       const query = new URLSearchParams(params).toString();
       return this.request(`/operacional/entregas-periodo${query ? '?' + query : ''}`);
     },
-    
+
     estoque: () => {
       return this.request('/operacional/estoque');
     },
@@ -382,18 +396,18 @@ class ApiClient {
       const query = new URLSearchParams(params).toString();
       return this.request(`/clientes${query ? '?' + query : ''}`);
     },
-    
+
     unificados: (params) => {
       const query = new URLSearchParams(params).toString();
       return this.request(`/clientes/unificados${query ? '?' + query : ''}`);
     },
-    
+
     stats: () => this.request('/clientes/unificados/stats'),
-    
+
     unificar: () => this.request('/clientes/unificar', {
       method: 'POST',
     }),
-    
+
     detalhes: (id) => this.request(`/clientes/unificados/${id}`),
   };
 }
