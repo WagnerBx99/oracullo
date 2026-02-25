@@ -33,7 +33,8 @@ export default function SalesReportFilters({
     onExport,
     isLoading,
     isExporting,
-    statesList // nova prop
+    statesList, // nova prop
+    activeTab // prop para esconder dimensões
 }) {
     const handleChange = (key, value) => {
         setFilters(prev => ({ ...prev, [key]: value }));
@@ -93,7 +94,7 @@ export default function SalesReportFilters({
                 </div>
 
                 {/* Filtro Vendedor */}
-                <div className="w-full md:w-64 space-y-1.5">
+                <div className={`w-full md:w-64 space-y-1.5 ${activeTab === 'consolidado' ? 'hidden' : ''}`}>
                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Vendedor</label>
                     <Select
                         value={filters.salesperson || "Todos"}
@@ -112,7 +113,7 @@ export default function SalesReportFilters({
                 </div>
 
                 {/* Filtro Filial */}
-                <div className="w-full md:w-64 space-y-1.5">
+                <div className={`w-full md:w-64 space-y-1.5 ${activeTab === 'consolidado' ? 'hidden' : ''}`}>
                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Filial</label>
                     <Select
                         value={filters.branch || "Todas"}

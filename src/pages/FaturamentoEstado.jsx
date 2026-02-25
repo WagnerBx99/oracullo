@@ -4,6 +4,7 @@ import { api } from '@/api/apiClient';
 import { useToast } from '@/components/ui/use-toast';
 import SalesReportFilters from '@/components/SalesReportFilters';
 import SalesReportTable from '@/components/SalesReportTable';
+import ConsolidatedReportView from '@/components/ConsolidatedReportView';
 
 export default function FaturamentoEstado() {
     const { toast } = useToast();
@@ -24,6 +25,7 @@ export default function FaturamentoEstado() {
     const [data, setData] = useState([]);
     const [pagination, setPagination] = useState({ page: 1, total_pages: 1, total: 0 });
     const [summary, setSummary] = useState(null);
+    const [consolidatedData, setConsolidatedData] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
 
@@ -91,9 +93,11 @@ export default function FaturamentoEstado() {
                 setPagination(res.pagination);
                 setSummary(res.summary);
             } else if (activeTab === 'consolidado') {
-                // Placeholder para quando a API consolidada existir
-                setData([]);
-                setSummary(null);
+                const res = await api.reports.consolidated(filters.state, {
+                    month: filters.month,
+                    year: filters.year
+                });
+                setConsolidatedData(res);
                 setPagination({ page: 1, total_pages: 1, total: 0 });
             }
         } catch (err) {
@@ -125,19 +129,26 @@ export default function FaturamentoEstado() {
     };
 
     const handleExport = async () => {
-        if (activeTab !== 'vendas') {
-            toast({ description: "Exportação não implementada para consolidado ainda." });
-            return;
-        }
-
         setIsExporting(true);
         try {
-            const url = api.reports.exportUrl(filters.state, {
-                month: filters.month,
-                year: filters.year,
-                salesperson: filters.salesperson || '',
-                branch: filters.branch || ''
-            });
+            let url = '';
+            let fileName = '';
+
+            if (activeTab === 'vendas') {
+                url = api.reports.exportUrl(filters.state, {
+                    month: filters.month,
+                    year: filters.year,
+                    salesperson: filters.salesperson || '',
+                    branch: filters.branch || ''
+                });
+                fileName = `Relatorio_Vendas_${filters.state}_${filters.month}_${filters.year}.xlsx`;
+            } else {
+                url = api.reports.exportConsolidatedUrl(filters.state, {
+                    month: filters.month,
+                    year: filters.year
+                });
+                fileName = `Relatorio_Consolidado_${filters.state}_${filters.month}_${filters.year}.xlsx`;
+            }
 
             const config = { headers: { 'Authorization': `Bearer ${api.accessToken}` } };
             const response = await fetch(url, config);
@@ -154,7 +165,7 @@ export default function FaturamentoEstado() {
             const downloadUrl = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = downloadUrl;
-            link.download = `Relatorio_Vendas_${filters.state}_${filters.month}_${filters.year}.xlsx`;
+            link.download = fileName;
             document.body.appendChild(link);
             link.click();
             link.remove();
@@ -198,7 +209,8 @@ export default function FaturamentoEstado() {
                         onExport={handleExport}
                         isLoading={isLoading}
                         isExporting={isExporting}
-                        statesList={statesList} // injetando nova lista
+                        statesList={statesList}
+                        activeTab={activeTab}
                     />
                 </div>
 
@@ -213,10 +225,10 @@ export default function FaturamentoEstado() {
                 </TabsContent>
 
                 <TabsContent value="consolidado" className="flex-1 overflow-hidden mt-0 data-[state=active]:flex data-[state=active]:flex-col">
-                    <div className="flex-1 p-8 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center text-slate-500 text-center">
-                        <h2 className="text-lg font-medium text-slate-700 dark:text-slate-300">Visão Consolidada (Em Breve)</h2>
-                        <p className="max-w-md mt-2">Os cards e subgrupos de consolidado para o Estado aparecerão aqui usando os mesmos filtros combinados acima.</p>
-                    </div>
+                    <ConsolidatedReportView
+                        data={consolidatedData}
+                        isLoading={isLoading}
+                    />
                 </TabsContent>
             </Tabs>
 

@@ -100,9 +100,9 @@ async function runSeed() {
                 const finalOpCost = typeof opCostByBrand[brand] !== 'undefined' ? opCostByBrand[brand] : 0.2085;
 
                 await poolAnalitico.query(
-                    `INSERT INTO brand_configs (brand, operational_cost_pct, salesperson_comm_pct, internal_comm_pct)
-           VALUES ($1, $2, $3, $4)`,
-                    [brand, finalOpCost, finalCommV, finalCommI]
+                    `INSERT INTO brand_configs (brand, operational_cost_pct, salesperson_comm_pct, internal_comm_pct, manager_comm_pct)
+           VALUES ($1, $2, $3, $4, $5)`,
+                    [brand, finalOpCost, finalCommV, finalCommI, 0.01]
                 );
                 brandsAdded.add(brand);
             }

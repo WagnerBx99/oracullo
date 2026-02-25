@@ -311,10 +311,18 @@ class ApiClient {
       const query = new URLSearchParams(params).toString();
       return this.request(`/reports/${state}/sales${query ? '?' + query : ''}`);
     },
+    consolidated: (state, params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/reports/${state}/consolidated${query ? '?' + query : ''}`);
+    },
     filters: (state) => this.request(`/reports/${state}/sales/filters`),
     exportUrl: (state, params) => {
       const query = new URLSearchParams(params).toString();
       return `${this.baseURL}/reports/${state}/sales/export${query ? '?' + query : ''}`;
+    },
+    exportConsolidatedUrl: (state, params) => {
+      const query = new URLSearchParams(params).toString();
+      return `${this.baseURL}/reports/${state}/consolidated/export${query ? '?' + query : ''}`;
     }
   };
 

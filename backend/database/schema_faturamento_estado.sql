@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS brand_configs (
     operational_cost_pct DECIMAL(5,4),
     salesperson_comm_pct DECIMAL(5,4) DEFAULT 0.0100,
     internal_comm_pct DECIMAL(5,4) DEFAULT 0.0050,
+    manager_comm_pct DECIMAL(6,4) NOT NULL DEFAULT 0.01,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -29,7 +29,7 @@ export const formatCurrency = (value) => {
 export const formatPercentage = (value, decimals = 1) => {
   const num = Number(value);
   if (isNaN(num)) return "0%";
-  return `${num.toFixed(decimals)}%`;
+  return `${(num * 100).toFixed(decimals)}%`;
 };
 
 /**

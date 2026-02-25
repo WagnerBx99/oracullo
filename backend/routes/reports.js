@@ -2,6 +2,7 @@ import express from 'express';
 import dataSourceService from '../services/DataSourceService.js';
 import { calculateSalesRow } from '../services/calculateSalesRow.js';
 import ExcelJS from 'exceljs';
+import ConsolidatedReportService from '../services/consolidated-report.service.js';
 
 const router = express.Router();
 
@@ -106,6 +107,151 @@ router.get('/:state/sales/export', async (req, res) => {
 
     } catch (error) {
         console.error('[ReportsController] Erro ao exportar Excel:', error);
+        res.status(500).json({ error: 'Erro ao exportar relatório', details: error.message });
+    }
+});
+
+// Endpoint: Exportação Excel Consolidado (Jan 25 A)
+router.get('/:state/consolidated/export', async (req, res) => {
+    try {
+        const state = req.params.state?.toUpperCase();
+        if (!state || state.length !== 2) {
+            return res.status(400).json({ error: 'Estado (UF) inválido.' });
+        }
+
+        const { month, year } = req.query;
+
+        // Filtros mandatorios
+        if (!month || !year) {
+            return res.status(400).json({ error: 'Mês e Ano são filtros obrigatórios.' });
+        }
+
+        // Fetch de dados brutos
+        const data = await dataSourceService.getSales(state, { month, year });
+
+        // Processar os dados
+        const processedTransactions = [];
+        for (const t of data.transactions) {
+            try {
+                const brandKey = t.brand ? t.brand.trim() : '';
+                const config = data.brandConfigs[brandKey] || null;
+                processedTransactions.push(calculateSalesRow(t, config));
+            } catch (err) {
+                if (err.message.includes('Configuração de marca ausente')) {
+                    return res.status(422).json({ error: err.message });
+                }
+                throw err;
+            }
+        }
+
+        const consolidatedView = ConsolidatedReportService.buildConsolidatedView(processedTransactions, data.brandConfigs);
+
+        // Criar a planilha Excel
+        const workbook = new ExcelJS.Workbook();
+
+        const buildColumns = (isConsolidated) => {
+            const cols = [
+                { header: 'Marca', key: 'brand', width: 25 },
+                { header: 'Rank.', key: 'rank', width: 15 },
+                { header: 'Faturamento', key: 'revenue', width: 20 },
+                { header: 'Custo', key: 'cost', width: 20 },
+                { header: 'Litros / Qtd.', key: 'liters_qty', width: 15 },
+                { header: 'Ticket Médio', key: 'avg_ticket', width: 15 },
+                { header: 'M. Bruta %', key: 'gross_margin', width: 15 },
+                { header: 'Custo Oper. %', key: 'operational_cost_pct', width: 15 },
+                { header: 'Custo Oper. R$', key: 'operational_cost_rs', width: 20 },
+                { header: 'M. Líquida %', key: 'net_margin_pct', width: 15 },
+                { header: 'Rentab. Líquida', key: 'net_profitability', width: 20 },
+                { header: 'Comissão Vendedor %', key: 'salesperson_comm_pct', width: 20 },
+                { header: 'Comissão Vendedor R$', key: 'salesperson_comm_rs', width: 20 },
+                { header: 'Comissão Interna %', key: 'internal_comm_pct', width: 20 },
+                { header: 'Comissão Interna R$', key: 'internal_comm_rs', width: 20 }
+            ];
+
+            if (isConsolidated) {
+                cols.push({ header: 'Comissão Gerente %', key: 'manager_comm_pct', width: 20 });
+                cols.push({ header: 'Comissão Gerente R$', key: 'manager_comm_rs', width: 20 });
+            }
+
+            return cols;
+        };
+
+        const formatPct = (val) => val != null ? val * 100 : val;
+
+        const populateSheet = (sheet, title, brands, isConsolidated) => {
+            // Título
+            sheet.addRow([title]);
+            sheet.getRow(sheet.rowCount).font = { bold: true, size: 14 };
+            sheet.addRow([]); // Blank line
+
+            // Header manual
+            const cols = buildColumns(isConsolidated);
+            sheet.addRow(cols.map(c => c.header));
+            sheet.getRow(sheet.rowCount).font = { bold: true };
+
+            brands.forEach(b => {
+                const rowObj = {
+                    brand: b.brand,
+                    rank: formatPct(b.rank),
+                    revenue: b.revenue,
+                    cost: b.cost,
+                    liters_qty: b.liters_qty,
+                    avg_ticket: b.avg_ticket,
+                    gross_margin: formatPct(b.gross_margin),
+                    operational_cost_pct: formatPct(b.operational_cost_pct),
+                    operational_cost_rs: b.operational_cost_rs,
+                    net_margin_pct: formatPct(b.net_margin_pct),
+                    net_profitability: b.net_profitability,
+                    salesperson_comm_pct: formatPct(b.salesperson_comm_pct),
+                    salesperson_comm_rs: b.salesperson_comm_rs,
+                    internal_comm_pct: formatPct(b.internal_comm_pct),
+                    internal_comm_rs: b.internal_comm_rs
+                };
+
+                if (isConsolidated) {
+                    rowObj.manager_comm_pct = formatPct(b.manager_comm_pct);
+                    rowObj.manager_comm_rs = b.manager_comm_rs;
+                }
+
+                const rowArray = cols.map(c => rowObj[c.key]);
+                sheet.addRow(rowArray);
+
+                if (b.brand === 'TOTAL') {
+                    sheet.getRow(sheet.rowCount).font = { bold: true };
+                }
+            });
+            sheet.addRow([]); // Blank
+            sheet.addRow([]); // Blank
+        };
+
+        // Tab: Vendedor
+        const sheetVendedor = workbook.addWorksheet('Por Vendedor');
+        sheetVendedor.columns = buildColumns(false); // Define col widths globalmente pra tab
+        consolidatedView.by_salesperson.forEach(spObj => {
+            populateSheet(sheetVendedor, `Vendedor: ${spObj.salesperson}`, spObj.brands, false);
+        });
+
+        // Tab: Filial
+        const sheetFilial = workbook.addWorksheet('Por Filial');
+        sheetFilial.columns = buildColumns(false);
+        consolidatedView.by_branch.forEach(brObj => {
+            populateSheet(sheetFilial, `Filial: ${brObj.branch}`, brObj.brands, false);
+        });
+
+        // Tab: Consolidado Geral
+        const sheetConsolidado = workbook.addWorksheet('Consolidado');
+        sheetConsolidado.columns = buildColumns(true);
+        populateSheet(sheetConsolidado, 'Resumo do Estado', consolidatedView.consolidated.brands, true);
+
+        // Retornar arquivo
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename=Relatorio_Consolidado_${state}_${month}_${year}.xlsx`);
+
+        await workbook.xlsx.write(res);
+        res.end();
+
+    } catch (error) {
+        console.error('[ReportsController] Erro ao exportar Excel Consolidado:', error);
         res.status(500).json({ error: 'Erro ao exportar relatório', details: error.message });
     }
 });
@@ -227,6 +373,52 @@ router.get('/:state/sales', async (req, res) => {
     } catch (error) {
         console.error('[ReportsController] Erro ao buscar relatório:', error);
         res.status(500).json({ error: 'Erro ao buscar relatório', details: error.message });
+    }
+});
+
+// Endpoint: Relatório Consolidado (Jan 25 A)
+router.get('/:state/consolidated', async (req, res) => {
+    try {
+        const state = req.params.state?.toUpperCase();
+        if (!state || state.length !== 2) {
+            return res.status(400).json({ error: 'Estado (UF) inválido.' });
+        }
+
+        const { month, year } = req.query;
+
+        if (!month || !year) {
+            return res.status(400).json({ error: 'Mês e Ano são filtros obrigatórios.' });
+        }
+
+        // Busca transações base (sem filtro de vendedor/filial)
+        const data = await dataSourceService.getSales(state, {
+            month,
+            year
+        });
+
+        // 1. Processar todas as linhas pela Regra de Negócio Pura base
+        const processedTransactions = [];
+        for (const t of data.transactions) {
+            try {
+                const brandKey = t.brand ? t.brand.trim() : '';
+                const config = data.brandConfigs[brandKey] || null;
+                processedTransactions.push(calculateSalesRow(t, config));
+            } catch (err) {
+                if (err.message.includes('Configuração de marca ausente')) {
+                    return res.status(422).json({ error: err.message });
+                }
+                throw err;
+            }
+        }
+
+        // 2. Monta as fatias do relatório usando o Agregator
+        const consolidatedView = ConsolidatedReportService.buildConsolidatedView(processedTransactions, data.brandConfigs);
+
+        res.json(consolidatedView);
+
+    } catch (error) {
+        console.error('[ReportsController] Erro ao buscar relatório consolidado:', error);
+        res.status(500).json({ error: 'Erro ao buscar relatório consolidado', details: error.message });
     }
 });
 
