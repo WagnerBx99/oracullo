@@ -153,10 +153,10 @@ async function runSeed() {
                 `INSERT INTO sales_transactions (
           state, product_code, sale_date, brand, subgroup, invoice_number,
           client_name, branch, salesperson, payment_term, product,
-          unit_price, quantity, unit_cost, liters_qty, packaging_type,
+          unit_price, quantity, unit_cost, total_sale_raw, liters_qty, packaging_type,
           ref_month, ref_year
         ) VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
         )`,
                 [
                     'SP', // Fixo
@@ -173,6 +173,7 @@ async function runSeed() {
                     parseFloat(row[11]) || 0,
                     parseFloat(row[12]) || 0,
                     parseFloat(row[13]) || 0,
+                    parseFloat(row[15]) || 0, // Venda Total (Col P)
                     liters,
                     row[28] ? String(row[28]) : 'UN', // Coluna 28 é Embalagem
                     refMonth,
@@ -181,6 +182,17 @@ async function runSeed() {
             );
             salesCount++;
         }
+
+        console.log('🔄 Calculando e persistindo comissões estáticas no banco de dados...');
+        await poolAnalitico.query(`
+            UPDATE sales_transactions s
+            SET 
+                salesperson_comm_pct = c.salesperson_comm_pct,
+                salesperson_comm_rs = (COALESCE(s.total_sale_raw, s.unit_price * s.quantity) * COALESCE(c.salesperson_comm_pct, 0.01))
+            FROM brand_configs c
+            WHERE s.brand = c.brand
+        `);
+
         console.log(`✅ Seed concluído com sucesso! Inseridas ${salesCount} transações.`);
         process.exit(0);
     } catch (error) {

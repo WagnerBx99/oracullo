@@ -25,10 +25,10 @@ export default function BrandTable({ brands, title, showManagerComm = false }) {
                             <th className="px-4 py-3 font-medium border-b shrink-0 text-right">Custo Oper. R$</th>
                             <th className="px-4 py-3 font-medium border-b shrink-0 text-right">M. Líquida %</th>
                             <th className="px-4 py-3 font-medium border-b shrink-0 text-right">Rentab. Líquida</th>
-                            <th className="px-4 py-3 font-medium border-b shrink-0 text-right">Com. Vendedor %</th>
-                            <th className="px-4 py-3 font-medium border-b shrink-0 text-right">Com. Vendedor R$</th>
-                            <th className="px-4 py-3 font-medium border-b shrink-0 text-right">Com. Interna %</th>
-                            <th className="px-4 py-3 font-medium border-b shrink-0 text-right">Com. Interna R$</th>
+                            <th className="px-4 py-3 font-medium border-b shrink-0 text-right bg-blue-50/50 dark:bg-blue-900/10 text-blue-700 dark:text-blue-400">Com. Vendedor %</th>
+                            <th className="px-4 py-3 font-medium border-b shrink-0 text-right bg-blue-50/50 dark:bg-blue-900/10 text-blue-700 dark:text-blue-400">Com. Vendedor R$</th>
+                            <th className="px-4 py-3 font-medium border-b shrink-0 text-right bg-purple-50/50 dark:bg-purple-900/10 text-purple-700 dark:text-purple-400">Com. Interna %</th>
+                            <th className="px-4 py-3 font-medium border-b shrink-0 text-right bg-purple-50/50 dark:bg-purple-900/10 text-purple-700 dark:text-purple-400">Com. Interna R$</th>
                             {showManagerComm && <th className="px-4 py-3 font-medium border-b shrink-0 text-right text-orange-600 dark:text-orange-500">Com. Gerente %</th>}
                             {showManagerComm && <th className="px-4 py-3 font-medium border-b shrink-0 text-right text-orange-600 dark:text-orange-500">Com. Gerente R$</th>}
                         </tr>
@@ -64,10 +64,10 @@ export default function BrandTable({ brands, title, showManagerComm = false }) {
                                     {cx(b.operational_cost_rs, formatCurrency)}
                                     <td className={`px-4 py-3 text-right font-medium ${netCol}`}>{formatPercent(b.net_margin_pct)}</td>
                                     {cx(b.net_profitability, formatCurrency, b.net_profitability < 0 ? 'text-red-600' : 'text-green-600 font-medium')}
-                                    {cx(b.salesperson_comm_pct, formatPercent)}
-                                    {cx(b.salesperson_comm_rs, formatCurrency)}
-                                    {cx(b.internal_comm_pct, formatPercent)}
-                                    {cx(b.internal_comm_rs, formatCurrency)}
+                                    <td className="px-4 py-3 text-right text-blue-700 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10">{b.salesperson_comm_pct == null ? '-' : formatPercent(b.salesperson_comm_pct)}</td>
+                                    <td className="px-4 py-3 text-right text-blue-700 dark:text-blue-400 font-medium bg-blue-50/50 dark:bg-blue-900/10">{b.salesperson_comm_rs == null ? '-' : formatCurrency(b.salesperson_comm_rs)}</td>
+                                    <td className="px-4 py-3 text-right text-purple-700 dark:text-purple-400 bg-purple-50/50 dark:bg-purple-900/10">{b.internal_comm_pct == null ? '-' : formatPercent(b.internal_comm_pct)}</td>
+                                    <td className="px-4 py-3 text-right text-purple-700 dark:text-purple-400 font-medium bg-purple-50/50 dark:bg-purple-900/10">{b.internal_comm_rs == null ? '-' : formatCurrency(b.internal_comm_rs)}</td>
                                     {showManagerComm && cx(b.manager_comm_pct, formatPercent, 'text-orange-600 dark:text-orange-400 font-medium')}
                                     {showManagerComm && cx(b.manager_comm_rs, formatCurrency, 'text-orange-600 dark:text-orange-400 font-medium')}
                                 </tr>

@@ -24,10 +24,18 @@ export function calculateSalesRow(transaction, brandConfig) {
 
     // Calculos base
     const totalCost = unitCost * quantity;
-    const totalSale = unitPrice * quantity;
+    const totalSale = typeof transaction.total_sale_raw !== 'undefined' && transaction.total_sale_raw !== null
+        ? Number(transaction.total_sale_raw)
+        : (unitPrice * quantity);
 
-    // Comissões
-    const salespersonCommRs = totalSale * Number(config.salesperson_comm_pct);
+    const salespersonCommPct = typeof transaction.salesperson_comm_pct !== 'undefined' && transaction.salesperson_comm_pct !== null
+        ? Number(transaction.salesperson_comm_pct)
+        : Number(config.salesperson_comm_pct);
+
+    const salespersonCommRs = typeof transaction.salesperson_comm_rs !== 'undefined' && transaction.salesperson_comm_rs !== null
+        ? Number(transaction.salesperson_comm_rs)
+        : totalSale * salespersonCommPct;
+
     const internalCommRs = totalSale * Number(config.internal_comm_pct);
 
     // Margem Bruta
@@ -60,7 +68,7 @@ export function calculateSalesRow(transaction, brandConfig) {
         // Campos Adicionados/Sobrescritos pela Especificação de Resposta
         total_cost: totalCost,
         total_sale: totalSale,
-        salesperson_comm_pct: Number(config.salesperson_comm_pct),
+        salesperson_comm_pct: salespersonCommPct,
         salesperson_comm_rs: salespersonCommRs,
         internal_comm_pct: Number(config.internal_comm_pct),
         internal_comm_rs: internalCommRs,
