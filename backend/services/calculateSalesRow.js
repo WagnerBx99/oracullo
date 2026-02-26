@@ -73,7 +73,7 @@ export function calculateSalesRow(transaction, brandConfig) {
         internal_comm_pct: Number(config.internal_comm_pct),
         internal_comm_rs: internalCommRs,
         gross_margin: grossMargin,
-        check_column: unitCost, // Espelho do custo unitário
+        check_column: transaction.check_column != null ? Number(transaction.check_column) : unitCost,
         operational_cost_pct: Number(config.operational_cost_pct),
         operational_cost_rs: operationalCostRs,
         net_margin_pct: netMarginPct,

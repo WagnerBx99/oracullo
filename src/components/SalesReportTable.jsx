@@ -12,6 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from "framer-motion";
+import { api } from '../api/apiClient';
 
 const formatCurrency = (val) => {
     if (val == null) return '-';
@@ -40,6 +41,449 @@ const getMarginColorClass = (val) => {
     if (val >= 0.10) return 'text-amber-600 dark:text-amber-400 font-semibold';
     return 'text-red-600 dark:text-red-400 font-semibold';
 }
+
+const InlineEditCommission = ({ transactionId, initialPct, initialRs, baseAmount, onUpdate }) => {
+    const [isEditing, setIsEditing] = React.useState(false);
+    const [pctValue, setPctValue] = React.useState(initialPct != null ? (initialPct * 100).toFixed(2) : '0.00');
+    const [isSaving, setIsSaving] = React.useState(false);
+    const inputRef = React.useRef(null);
+
+    // Snapshot do original da linha "limpa" para não perder a referência durante o live preview
+    const originalPctRef = React.useRef(initialPct);
+    const originalRsRef = React.useRef(initialRs);
+
+    // Quando o DB salva e propaga pra baixo de verdade depois de um f5/reload da grid, a prop "mãe" (initialPct) virá atualizada.
+    // Mas não devemos forçar o reset do state do Input se ele estiver aberto ou se acabou de fechar.
+    React.useEffect(() => {
+        if (!isEditing && !isSaving) {
+            setPctValue(initialPct != null ? (initialPct * 100).toFixed(2) : '0.00');
+            originalPctRef.current = initialPct;
+            originalRsRef.current = initialRs;
+        }
+    }, [initialPct, initialRs]); // Removemos isEditing daqui para o blur nao trigar o reset da prop "velha"
+
+    const startEditing = () => {
+        if (isSaving) return;
+        originalPctRef.current = initialPct;
+        originalRsRef.current = initialRs;
+        setIsEditing(true);
+    };
+
+    const handlePercentageChange = (e) => {
+        let val = e.target.value.replace(/[^0-9.,]/g, '').replace(',', '.');
+        setPctValue(val);
+
+        const numVal = parseFloat(val);
+        if (!isNaN(numVal) && baseAmount) {
+            const newDecP = numVal / 100;
+            const calculatedRs = baseAmount * newDecP;
+            // OTIMISTA: Avisa o pai p/ atualizar visual do Row (Coluna R$)
+            if (onUpdate) onUpdate(newDecP, calculatedRs);
+        }
+    };
+
+    const saveChanges = async () => {
+        setIsEditing(false); // input morre, vira <div> com a prop atualizada da Row
+        const floatPct = parseFloat(pctValue);
+
+        if (isNaN(floatPct)) {
+            // Restaura
+            if (onUpdate) onUpdate(originalPctRef.current, originalRsRef.current);
+            setPctValue(originalPctRef.current != null ? (originalPctRef.current * 100).toFixed(2) : '0.00');
+            return;
+        }
+
+        const newDecimalPct = floatPct / 100;
+        const calculatedRs = baseAmount * newDecimalPct;
+
+        // Verifica contra o original REAL salvo antes da edição. Se bater igual o prévio da sessão, cancela REST.
+        if (Math.abs(newDecimalPct - (originalPctRef.current || 0)) < 0.0001) {
+            if (onUpdate) onUpdate(originalPctRef.current, originalRsRef.current);
+            setPctValue(originalPctRef.current != null ? (originalPctRef.current * 100).toFixed(2) : '0.00');
+            return;
+        }
+
+        setIsSaving(true);
+        // Props no pai já estão certas por causa do handlePercentageChange live
+
+        try {
+            await api.relatorios.updateSaleCommission(transactionId, { salesperson_comm_pct: newDecimalPct });
+            originalPctRef.current = newDecimalPct; // Novo estado de referẽncia original pos-DB commit.
+            originalRsRef.current = calculatedRs;
+            // Sucesso preserva visual otimizado nas props do pai.
+        } catch (err) {
+            console.error('Failed to save commission:', err);
+            // Voltar atrás o preview no erro
+            if (onUpdate) onUpdate(originalPctRef.current, originalRsRef.current);
+            setPctValue(originalPctRef.current != null ? (originalPctRef.current * 100).toFixed(2) : '0.00');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            saveChanges();
+            inputRef.current?.blur();
+        }
+        if (e.key === 'Escape') {
+            setIsEditing(false);
+            if (onUpdate) onUpdate(originalPctRef.current, originalRsRef.current);
+            setPctValue(originalPctRef.current != null ? (originalPctRef.current * 100).toFixed(2) : '0.00');
+        }
+    };
+
+    return (
+        <div className="flex flex-row items-center justify-end w-full gap-2">
+            <div className="flex-1 text-right">
+                {isEditing ? (
+                    <div className="relative inline-flex items-center">
+                        <input
+                            ref={inputRef}
+                            className={`w-16 px-1 py-0.5 text-right bg-white dark:bg-slate-800 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 ${isSaving ? 'opacity-50' : ''}`}
+                            value={pctValue}
+                            onChange={handlePercentageChange}
+                            onBlur={saveChanges}
+                            onKeyDown={handleKeyDown}
+                            autoFocus
+                        />
+                        <span className="ml-1 text-xs text-muted-foreground">%</span>
+                    </div>
+                ) : (
+                    <div
+                        className={`cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/40 px-1 rounded transition-colors ${isSaving ? 'animate-pulse opacity-50' : ''}`}
+                        onClick={startEditing}
+                        title="Clique duplo ou clique para editar"
+                    >
+                        {formatPct(parseFloat(pctValue) / 100)}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+const InlineEditCost = ({ transactionId, initialCost, onUpdate }) => {
+    const [isEditing, setIsEditing] = React.useState(false);
+    const [costValue, setCostValue] = React.useState(initialCost != null ? Number(initialCost).toFixed(2) : '0.00');
+    const [isSaving, setIsSaving] = React.useState(false);
+    const inputRef = React.useRef(null);
+
+    // Snapshot
+    const originalCostRef = React.useRef(initialCost);
+
+    React.useEffect(() => {
+        if (!isEditing && !isSaving) {
+            setCostValue(initialCost != null ? Number(initialCost).toFixed(2) : '0.00');
+            originalCostRef.current = initialCost;
+        }
+    }, [initialCost]);
+
+    const startEditing = () => {
+        if (isSaving) return;
+        originalCostRef.current = initialCost;
+        setIsEditing(true);
+    };
+
+    const handleCostChange = (e) => {
+        let val = e.target.value.replace(/[^0-9.,]/g, '').replace(',', '.');
+        setCostValue(val);
+
+        const numVal = parseFloat(val);
+        if (!isNaN(numVal)) {
+            if (onUpdate) onUpdate(numVal);
+        }
+    };
+
+    const saveChanges = async () => {
+        setIsEditing(false); // input morre, vira <div>
+        const floatCost = parseFloat(costValue);
+
+        if (isNaN(floatCost)) {
+            if (onUpdate) onUpdate(originalCostRef.current);
+            setCostValue(originalCostRef.current != null ? Number(originalCostRef.current).toFixed(2) : '0.00');
+            return;
+        }
+
+        if (Math.abs(floatCost - (Number(originalCostRef.current) || 0)) < 0.0001) {
+            if (onUpdate) onUpdate(originalCostRef.current);
+            setCostValue(originalCostRef.current != null ? Number(originalCostRef.current).toFixed(2) : '0.00');
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            await api.relatorios.updateUnitCost(transactionId, { unit_cost: floatCost });
+            originalCostRef.current = floatCost;
+        } catch (err) {
+            console.error('Failed to save cost:', err);
+            if (onUpdate) onUpdate(originalCostRef.current);
+            setCostValue(originalCostRef.current != null ? Number(originalCostRef.current).toFixed(2) : '0.00');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            saveChanges();
+            inputRef.current?.blur();
+        }
+        if (e.key === 'Escape') {
+            setIsEditing(false);
+            if (onUpdate) onUpdate(originalCostRef.current);
+            setCostValue(originalCostRef.current != null ? Number(originalCostRef.current).toFixed(2) : '0.00');
+        }
+    };
+
+    return (
+        <div className="flex flex-row items-center justify-end w-full gap-2 text-foreground font-medium">
+            <div className="flex-1 text-right">
+                {isEditing ? (
+                    <div className="relative inline-flex items-center">
+                        <span className="mr-1 text-xs text-muted-foreground mr-1">R$</span>
+                        <input
+                            ref={inputRef}
+                            className={`w-20 px-1 py-0.5 text-right bg-white dark:bg-slate-800 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500 ${isSaving ? 'opacity-50' : ''}`}
+                            value={costValue}
+                            onChange={handleCostChange}
+                            onBlur={saveChanges}
+                            onKeyDown={handleKeyDown}
+                            autoFocus
+                        />
+                    </div>
+                ) : (
+                    <div
+                        className={`cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-900/40 px-1 rounded transition-colors ${isSaving ? 'animate-pulse opacity-50' : ''}`}
+                        onClick={startEditing}
+                        title="Clique duplo ou clique para editar"
+                    >
+                        {formatCurrency(costValue !== '' && !isNaN(parseFloat(costValue)) ? parseFloat(costValue) : 0)}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+const InlineEditCheck = ({ transactionId, initialCheck, onUpdate }) => {
+    const [isEditing, setIsEditing] = React.useState(false);
+    const [checkValue, setCheckValue] = React.useState(initialCheck != null ? Number(initialCheck).toFixed(2) : '0.00');
+    const [isSaving, setIsSaving] = React.useState(false);
+    const inputRef = React.useRef(null);
+
+    const originalCheckRef = React.useRef(initialCheck);
+
+    React.useEffect(() => {
+        if (!isEditing && !isSaving) {
+            setCheckValue(initialCheck != null ? Number(initialCheck).toFixed(2) : '0.00');
+            originalCheckRef.current = initialCheck;
+        }
+    }, [initialCheck]);
+
+    const startEditing = () => {
+        if (isSaving) return;
+        originalCheckRef.current = initialCheck;
+        setIsEditing(true);
+    };
+
+    const handleCheckChange = (e) => {
+        let val = e.target.value.replace(/[^0-9.,-]/g, '').replace(',', '.');
+        setCheckValue(val);
+
+        const numVal = parseFloat(val);
+        if (!isNaN(numVal)) {
+            if (onUpdate) onUpdate(numVal);
+        }
+    };
+
+    const saveChanges = async () => {
+        setIsEditing(false);
+        const floatCheck = parseFloat(checkValue);
+
+        if (isNaN(floatCheck)) {
+            if (onUpdate) onUpdate(originalCheckRef.current);
+            setCheckValue(originalCheckRef.current != null ? Number(originalCheckRef.current).toFixed(2) : '0.00');
+            return;
+        }
+
+        if (Math.abs(floatCheck - (Number(originalCheckRef.current) || 0)) < 0.0001) {
+            if (onUpdate) onUpdate(originalCheckRef.current);
+            setCheckValue(originalCheckRef.current != null ? Number(originalCheckRef.current).toFixed(2) : '0.00');
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            await api.relatorios.updateCheckColumn(transactionId, { check_column: floatCheck });
+            originalCheckRef.current = floatCheck;
+        } catch (err) {
+            console.error('Failed to save check column:', err);
+            if (onUpdate) onUpdate(originalCheckRef.current);
+            setCheckValue(originalCheckRef.current != null ? Number(originalCheckRef.current).toFixed(2) : '0.00');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            saveChanges();
+            inputRef.current?.blur();
+        }
+        if (e.key === 'Escape') {
+            setIsEditing(false);
+            if (onUpdate) onUpdate(originalCheckRef.current);
+            setCheckValue(originalCheckRef.current != null ? Number(originalCheckRef.current).toFixed(2) : '0.00');
+        }
+    };
+
+    return (
+        <div className="flex flex-row items-center justify-end w-full gap-2 text-foreground font-medium">
+            <div className="flex-1 text-right">
+                {isEditing ? (
+                    <div className="relative inline-flex items-center">
+                        <span className="mr-1 text-xs text-muted-foreground mr-1">R$</span>
+                        <input
+                            ref={inputRef}
+                            className={`w-20 px-1 py-0.5 text-right bg-white dark:bg-slate-800 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-amber-500 ${isSaving ? 'opacity-50' : ''}`}
+                            value={checkValue}
+                            onChange={handleCheckChange}
+                            onBlur={saveChanges}
+                            onKeyDown={handleKeyDown}
+                            autoFocus
+                        />
+                    </div>
+                ) : (
+                    <div
+                        className={`cursor-pointer hover:bg-amber-100 dark:hover:bg-amber-900/40 px-1 rounded transition-colors ${isSaving ? 'animate-pulse opacity-50' : ''}`}
+                        onClick={startEditing}
+                        title="Clique duplo ou clique para editar"
+                    >
+                        {formatCurrency(checkValue !== '' && !isNaN(parseFloat(checkValue)) ? parseFloat(checkValue) : 0)}
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
+const EditableSaleRow = ({ row, index }) => {
+    // Usamos state duplicado da row para que ela possa reagir sem remount agressivo da tabela pai
+    const [localRow, setLocalRow] = React.useState(row);
+
+    // Permite ao pai resetar ou forçar render novo se row data for atualizada via refresh
+    React.useEffect(() => {
+        setLocalRow(row);
+    }, [row]);
+
+    // Quando o InlineComponent salva, deixamos onUpdate syncar o R$ calculado no state local
+    const handleCommissionUpdate = (newPct, newRs) => {
+        setLocalRow(prev => ({
+            ...prev,
+            salesperson_comm_pct: newPct,
+            salesperson_comm_rs: newRs
+        }));
+    };
+
+    // Quando o InlineCost salva, tudo é afetado:
+    const handleCostUpdate = (newUnitCost) => {
+        setLocalRow(prev => {
+            const quantity = Number(prev.quantity) || 0;
+            const operationalCostPct = Number(prev.operational_cost_pct) || 0;
+            const totalSale = Number(prev.total_sale) || 0;
+
+            const newTotalCost = newUnitCost * quantity;
+
+            // Margem Bruta
+            const newGrossMargin = totalSale > 0 ? (totalSale - newTotalCost) / totalSale : 0;
+
+            // Margem Liquida
+            const newNetMarginPct = newGrossMargin - operationalCostPct;
+
+            // Rentabilidade Liquida
+            const newNetProfitability = totalSale * newNetMarginPct;
+
+            return {
+                ...prev,
+                unit_cost: newUnitCost,
+                total_cost: newTotalCost,
+                gross_margin: newGrossMargin,
+                net_margin_pct: newNetMarginPct,
+                net_profitability: newNetProfitability,
+                check_column: newUnitCost // Espelho de Custo Unitário
+            };
+        });
+    };
+
+    const handleCheckUpdate = (newCheck) => {
+        setLocalRow(prev => ({
+            ...prev,
+            check_column: newCheck
+        }));
+    };
+
+    return (
+        <motion.tr
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index < 20 ? index * 0.02 : 0 }}
+            className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+        >
+            <TableCell className="font-mono text-muted-foreground">{localRow.product_code}</TableCell>
+            <TableCell className="text-muted-foreground">{formatDate(localRow.sale_date)}</TableCell>
+            <TableCell className="text-muted-foreground">{localRow.brand}</TableCell>
+            <TableCell className="text-muted-foreground">{localRow.subgroup}</TableCell>
+            <TableCell className="font-mono text-muted-foreground">{localRow.invoice_number}</TableCell>
+            <TableCell className="truncate max-w-[200px] text-foreground font-medium" title={localRow.client_name}>{localRow.client_name}</TableCell>
+            <TableCell className="text-muted-foreground">{localRow.branch}</TableCell>
+            <TableCell className="text-muted-foreground">{localRow.salesperson}</TableCell>
+            <TableCell className="text-muted-foreground">{localRow.payment_term}</TableCell>
+            <TableCell className="truncate max-w-[250px] text-foreground" title={localRow.product}>{localRow.product}</TableCell>
+            <TableCell className="text-right text-muted-foreground">{formatCurrency(localRow.unit_price)}</TableCell>
+            <TableCell className="text-right text-muted-foreground">{localRow.quantity}</TableCell>
+            <TableCell className="text-right font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50/50 dark:bg-emerald-900/10 p-1">
+                <InlineEditCost
+                    transactionId={localRow.id}
+                    initialCost={row.unit_cost}
+                    onUpdate={handleCostUpdate}
+                />
+            </TableCell>
+            <TableCell className="text-right font-medium text-foreground">{formatCurrency(localRow.total_cost)}</TableCell>
+            <TableCell className="text-right font-medium text-foreground">{formatCurrency(localRow.total_sale)}</TableCell>
+            <TableCell className="text-right text-muted-foreground">{localRow.liters_qty}</TableCell>
+            <TableCell className="text-right text-blue-700 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10 p-1">
+                <InlineEditCommission
+                    transactionId={localRow.id}
+                    initialPct={row.salesperson_comm_pct}
+                    initialRs={row.salesperson_comm_rs}
+                    baseAmount={localRow.total_sale}
+                    onUpdate={handleCommissionUpdate}
+                />
+            </TableCell>
+            <TableCell className="text-right font-medium text-blue-700 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10">
+                {formatCurrency(localRow.salesperson_comm_rs)}
+            </TableCell>
+            <TableCell className="text-right text-purple-700 dark:text-purple-400 bg-purple-50/50 dark:bg-purple-900/10">{formatPct(localRow.internal_comm_pct)}</TableCell>
+            <TableCell className="text-right font-medium text-purple-700 dark:text-purple-400 bg-purple-50/50 dark:bg-purple-900/10">{formatCurrency(localRow.internal_comm_rs)}</TableCell>
+            <TableCell className={`text-right ${getMarginColorClass(localRow.gross_margin)}`}>{formatPct(localRow.gross_margin)}</TableCell>
+            <TableCell className="text-right text-muted-foreground p-1 bg-amber-50/30 dark:bg-amber-900/10">
+                <InlineEditCheck
+                    transactionId={localRow.id}
+                    initialCheck={row.check_column}
+                    onUpdate={handleCheckUpdate}
+                />
+            </TableCell>
+            <TableCell className="text-right text-muted-foreground">{formatPct(localRow.operational_cost_pct)}</TableCell>
+            <TableCell className="text-right text-orange-600 dark:text-orange-400">{formatCurrency(localRow.operational_cost_rs)}</TableCell>
+            <TableCell className={`text-right ${getMarginColorClass(localRow.net_margin_pct)}`}>{formatPct(localRow.net_margin_pct)}</TableCell>
+            <TableCell className="text-right font-bold text-foreground">{formatCurrency(localRow.net_profitability)}</TableCell>
+            <TableCell className="text-muted-foreground">{localRow.ref_month}</TableCell>
+            <TableCell className="text-muted-foreground">{localRow.ref_year}</TableCell>
+            <TableCell className="text-muted-foreground">{localRow.packaging_type}</TableCell>
+        </motion.tr>
+    );
+};
 
 export default function SalesReportTable({
     data,
@@ -103,43 +547,7 @@ export default function SalesReportTable({
                                 </TableRow>
                             ) : (
                                 data?.map((row, index) => (
-                                    <motion.tr
-                                        key={row.id || index}
-                                        initial={{ opacity: 0, x: -10 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: index < 20 ? index * 0.02 : 0 }}
-                                        className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
-                                    >
-                                        <TableCell className="font-mono text-muted-foreground">{row.product_code}</TableCell>
-                                        <TableCell className="text-muted-foreground">{formatDate(row.sale_date)}</TableCell>
-                                        <TableCell className="text-muted-foreground">{row.brand}</TableCell>
-                                        <TableCell className="text-muted-foreground">{row.subgroup}</TableCell>
-                                        <TableCell className="font-mono text-muted-foreground">{row.invoice_number}</TableCell>
-                                        <TableCell className="truncate max-w-[200px] text-foreground font-medium" title={row.client_name}>{row.client_name}</TableCell>
-                                        <TableCell className="text-muted-foreground">{row.branch}</TableCell>
-                                        <TableCell className="text-muted-foreground">{row.salesperson}</TableCell>
-                                        <TableCell className="text-muted-foreground">{row.payment_term}</TableCell>
-                                        <TableCell className="truncate max-w-[250px] text-foreground" title={row.product}>{row.product}</TableCell>
-                                        <TableCell className="text-right text-muted-foreground">{formatCurrency(row.unit_price)}</TableCell>
-                                        <TableCell className="text-right text-muted-foreground">{row.quantity}</TableCell>
-                                        <TableCell className="text-right text-muted-foreground">{formatCurrency(row.unit_cost)}</TableCell>
-                                        <TableCell className="text-right font-medium text-foreground">{formatCurrency(row.total_cost)}</TableCell>
-                                        <TableCell className="text-right font-medium text-foreground">{formatCurrency(row.total_sale)}</TableCell>
-                                        <TableCell className="text-right text-muted-foreground">{row.liters_qty}</TableCell>
-                                        <TableCell className="text-right text-blue-700 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10">{formatPct(row.salesperson_comm_pct)}</TableCell>
-                                        <TableCell className="text-right font-medium text-blue-700 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/10">{formatCurrency(row.salesperson_comm_rs)}</TableCell>
-                                        <TableCell className="text-right text-purple-700 dark:text-purple-400 bg-purple-50/50 dark:bg-purple-900/10">{formatPct(row.internal_comm_pct)}</TableCell>
-                                        <TableCell className="text-right font-medium text-purple-700 dark:text-purple-400 bg-purple-50/50 dark:bg-purple-900/10">{formatCurrency(row.internal_comm_rs)}</TableCell>
-                                        <TableCell className={`text-right ${getMarginColorClass(row.gross_margin)}`}>{formatPct(row.gross_margin)}</TableCell>
-                                        <TableCell className="text-right text-muted-foreground">{formatCurrency(row.check_column)}</TableCell>
-                                        <TableCell className="text-right text-muted-foreground">{formatPct(row.operational_cost_pct)}</TableCell>
-                                        <TableCell className="text-right text-orange-600 dark:text-orange-400">{formatCurrency(row.operational_cost_rs)}</TableCell>
-                                        <TableCell className={`text-right ${getMarginColorClass(row.net_margin_pct)}`}>{formatPct(row.net_margin_pct)}</TableCell>
-                                        <TableCell className="text-right font-bold text-foreground">{formatCurrency(row.net_profitability)}</TableCell>
-                                        <TableCell className="text-muted-foreground">{row.ref_month}</TableCell>
-                                        <TableCell className="text-muted-foreground">{row.ref_year}</TableCell>
-                                        <TableCell className="text-muted-foreground">{row.packaging_type}</TableCell>
-                                    </motion.tr>
+                                    <EditableSaleRow key={row.id || index} row={row} index={index} />
                                 ))
                             )}
                         </AnimatePresence>

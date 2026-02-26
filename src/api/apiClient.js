@@ -264,6 +264,21 @@ class ApiClient {
       return this.request(`/relatorios/vendas-consolidado${query ? '?' + query : ''}`);
     },
 
+    updateSaleCommission: (id, data) => this.request(`/reports/sales/${id}/commission`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
+    updateUnitCost: (id, data) => this.request(`/reports/sales/${id}/cost`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
+    updateCheckColumn: (id, data) => this.request(`/reports/sales/${id}/check`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    }),
+
     vendasTrading: (params) => {
       const query = new URLSearchParams(params).toString();
       return this.request(`/relatorios/vendas-trading${query ? '?' + query : ''}`);

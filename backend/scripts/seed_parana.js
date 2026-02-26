@@ -97,9 +97,9 @@ async function runSeed() {
                           state, product_code, sale_date, brand, subgroup, invoice_number,
                           client_name, branch, salesperson, payment_term, product,
                           unit_price, quantity, unit_cost, total_sale_raw, liters_qty, packaging_type,
-                          ref_month, ref_year
+                          ref_month, ref_year, check_column
                         ) VALUES (
-                          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
+                          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
                         )`,
                         [
                             'PR', // Fixo PR
@@ -120,7 +120,8 @@ async function runSeed() {
                             liters,
                             row[28] ? String(row[28]) : 'UN',
                             refMonth,
-                            refYear
+                            refYear,
+                            parseFloat(row[21]) || null // Conferência (Col V - Idx 21)
                         ]
                     );
                     salesCount++;

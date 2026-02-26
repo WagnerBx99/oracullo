@@ -3,6 +3,11 @@ import dataSourceService from '../services/DataSourceService.js';
 import { calculateSalesRow } from '../services/calculateSalesRow.js';
 import ExcelJS from 'exceljs';
 import ConsolidatedReportService from '../services/consolidated-report.service.js';
+import {
+    updateSaleCommission,
+    updateUnitCost,
+    updateCheckColumn
+} from '../controllers/salesController.js';
 
 const router = express.Router();
 
@@ -282,6 +287,15 @@ router.get('/:state/sales/filters', async (req, res) => {
         res.status(500).json({ error: 'Erro ao buscar filtros', details: error.message });
     }
 });
+
+// Endpoint: Atualizar Comissão Manualmente (Feature Inline Edit)
+router.patch('/sales/:id/commission', updateSaleCommission);
+
+// Endpoint:// Atualiza o Custo Unitário (Edição Inline)
+router.patch('/sales/:id/cost', updateUnitCost);
+
+// Atualiza a Coluna de Conferência (Edição Inline)
+router.patch('/sales/:id/check', updateCheckColumn);
 
 // Endpoint: Relatório de Vendas Principal
 router.get('/:state/sales', async (req, res) => {
