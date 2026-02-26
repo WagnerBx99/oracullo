@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Package, Clock, CheckCircle, AlertTriangle, TrendingUp, Activity } from 'lucide-react';
 import { motion } from "framer-motion";
 import {
-  LineChart, Line, BarChart, Bar, AreaChart, Area,
+  LineChart, Line, BarChart, Bar, Area,
   ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 

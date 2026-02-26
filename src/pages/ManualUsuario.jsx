@@ -6,7 +6,7 @@ import {
   FileText, Download, ChevronRight, Home, LayoutDashboard, 
   Database, ShoppingCart, Settings, DollarSign, BarChart3,
   TrendingUp, Package, Target, Users, Award, Briefcase,
-  Layers, FileDown, Filter, RefreshCw, Edit3, Plus, Upload,
+  Layers, FileDown, Filter, RefreshCw, Edit3, Plus,
   Eye, Zap, PieChart, Activity
 } from 'lucide-react';
 

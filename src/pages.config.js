@@ -13,6 +13,7 @@ import Operacional from './pages/Operacional';
 import Relatorios from './pages/Relatorios';
 import RelatoriosDesenvolvimento from './pages/RelatoriosDesenvolvimento';
 import FaturamentoEstado from './pages/FaturamentoEstado';
+import FaturamentoDiario from './pages/FaturamentoDiario';
 import __Layout from './Layout.jsx';
 
 export const PAGES = {
@@ -30,6 +31,7 @@ export const PAGES = {
     "Operacional": Operacional,
     "RelatoriosDesenvolvimento": RelatoriosDesenvolvimento,
     "faturamento_estado": FaturamentoEstado,
+    "faturamento_diario": FaturamentoDiario,
 }
 
 export const pagesConfig = {

@@ -72,7 +72,8 @@ export default function Layout({ children, currentPageName }) {
       page: 'Comercial',
       submenu: [
         { label: 'Dashboard Comercial', page: 'Comercial' },
-        { label: 'Faturamento por Estado', page: 'faturamento_estado' }
+        { label: 'Faturamento por Estado', page: 'faturamento_estado' },
+        { label: 'Faturamento Diário', page: 'faturamento_diario' }
       ]
     },
     {

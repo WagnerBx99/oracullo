@@ -25,7 +25,7 @@ const AuthenticatedApp = () => {
     <Routes>
       {/* Rota pública de login */}
       <Route path="/login" element={<Login />} />
-      
+
       {/* Rotas protegidas */}
       <Route path="/" element={
         <ProtectedRoute>
@@ -34,7 +34,7 @@ const AuthenticatedApp = () => {
           </LayoutWrapper>
         </ProtectedRoute>
       } />
-      
+
       {Object.entries(Pages).map(([path, Page]) => (
         <Route
           key={path}
@@ -48,7 +48,7 @@ const AuthenticatedApp = () => {
           }
         />
       ))}
-      
+
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
@@ -60,7 +60,7 @@ function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
-        <Router>
+        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <NavigationTracker />
           <AuthenticatedApp />
         </Router>

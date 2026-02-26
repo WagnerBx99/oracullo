@@ -4,8 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, DollarSign, Target, Users, Briefcase } from 'lucide-react';
 import { motion } from "framer-motion";
-import {
-  AreaChart, Area, LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+import { Area, Line, BarChart, Bar, PieChart, Pie, Cell,
   ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar
 } from 'recharts';
 import { api } from '@/api/apiClient';

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileDown, Filter, Send, CheckCircle } from 'lucide-react';
 import { motion } from "framer-motion";
 import StatsCard from '@/components/dashboard/StatsCard';

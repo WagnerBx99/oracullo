@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Package, DollarSign, TrendingUp, BarChart3, Plus, Upload, RefreshCw, Database, Target, Edit3, Users } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { DollarSign, TrendingUp, RefreshCw, Database, Target, Edit3, Users } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
 import { motion } from "framer-motion";
@@ -9,7 +9,6 @@ import KPICard from '@/components/dashboard/KPICard';
 import ConsolidacaoSistemas from '@/components/dashboard/ConsolidacaoSistemas';
 import DatabaseArchitecture from '@/components/dashboard/DatabaseArchitecture';
 import EditableDashboard from '@/components/dashboard/EditableDashboard';
-import MargemChart from '@/components/dashboard/MargemChart';
 import api from '@/api/apiClient';
 
 export default function Dashboard() {

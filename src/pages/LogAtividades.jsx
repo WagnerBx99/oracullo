@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +8,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
   Activity,
   Search,
-  Filter,
   FileText,
   Edit,
   Trash2,

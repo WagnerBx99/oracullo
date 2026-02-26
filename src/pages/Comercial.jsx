@@ -5,8 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, TrendingUp, Users, Target, Award, Zap } from 'lucide-react';
 import { motion } from "framer-motion";
-import {
-  AreaChart, Area, LineChart, Line, BarChart, Bar,
+import { Area, Line, BarChart, Bar,
   ComposedChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, 
   ScatterChart, Scatter
 } from 'recharts';

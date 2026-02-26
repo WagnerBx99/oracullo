@@ -117,7 +117,7 @@ export default function FaturamentoEstado() {
         if (filters.state) {
             fetchReportData(1);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
     }, [filters.state, activeTab]); // Dispara também ao mudar de aba
 
     const handleApplyFilters = () => {

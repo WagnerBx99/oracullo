@@ -3,6 +3,8 @@ import dataSourceService from '../services/DataSourceService.js';
 import { calculateSalesRow } from '../services/calculateSalesRow.js';
 import ExcelJS from 'exceljs';
 import ConsolidatedReportService from '../services/consolidated-report.service.js';
+import DailyBillingService from '../services/DailyBillingService.js';
+import DailyBillingConsolidatedService from '../services/DailyBillingConsolidatedService.js';
 import {
     updateSaleCommission,
     updateUnitCost,
@@ -433,6 +435,61 @@ router.get('/:state/consolidated', async (req, res) => {
     } catch (error) {
         console.error('[ReportsController] Erro ao buscar relatório consolidado:', error);
         res.status(500).json({ error: 'Erro ao buscar relatório consolidado', details: error.message });
+    }
+});
+
+// Endpoint: Relatório de Faturamento Diário Resumido
+router.get('/:state/daily-billing', async (req, res) => {
+    try {
+        const state = req.params.state?.toUpperCase();
+        if (!state || state.length !== 2) {
+            return res.status(400).json({ error: 'Estado (UF) inválido.' });
+        }
+
+        const { month, year, salesperson, branch } = req.query;
+
+        if (!month || !year) {
+            return res.status(400).json({ error: 'Mês e Ano são filtros obrigatórios.' });
+        }
+
+        const report = await DailyBillingService.buildDailyBillingReport(state, {
+            month,
+            year,
+            salesperson,
+            branch
+        });
+
+        res.json(report);
+    } catch (error) {
+        console.error('[ReportsController] Erro ao buscar relatório de faturamento diário:', error);
+        res.status(500).json({ error: 'Erro ao buscar faturamento diário', details: error.message });
+    }
+});
+
+// Endpoint: Relatório de Faturamento Diário Consolidado (Filial -> Marca)
+router.get('/:state/daily-billing-consolidated', async (req, res) => {
+    try {
+        const state = req.params.state?.toUpperCase();
+        if (!state || state.length !== 2) {
+            return res.status(400).json({ error: 'Estado (UF) inválido.' });
+        }
+
+        const { month, year, branch } = req.query;
+
+        if (!month || !year) {
+            return res.status(400).json({ error: 'Mês e Ano são filtros obrigatórios.' });
+        }
+
+        const report = await DailyBillingConsolidatedService.buildDailyBillingConsolidatedReport(state, {
+            month,
+            year,
+            branch
+        });
+
+        res.json(report);
+    } catch (error) {
+        console.error('[ReportsController] Erro ao buscar faturamento diário consolidado:', error);
+        res.status(500).json({ error: 'Erro ao buscar faturamento diário consolidado', details: error.message });
     }
 });
 

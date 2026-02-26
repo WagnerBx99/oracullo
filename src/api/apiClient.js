@@ -330,6 +330,14 @@ class ApiClient {
       const query = new URLSearchParams(params).toString();
       return this.request(`/reports/${state}/consolidated${query ? '?' + query : ''}`);
     },
+    dailyBilling: (state, params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/reports/${state}/daily-billing${query ? '?' + query : ''}`);
+    },
+    dailyBillingConsolidated: (state, params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/reports/${state}/daily-billing-consolidated${query ? '?' + query : ''}`);
+    },
     filters: (state) => this.request(`/reports/${state}/sales/filters`),
     exportUrl: (state, params) => {
       const query = new URLSearchParams(params).toString();

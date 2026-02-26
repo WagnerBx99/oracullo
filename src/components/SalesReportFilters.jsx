@@ -8,6 +8,12 @@ import {
     SelectTrigger,
     SelectValue
 } from "@/components/ui/select";
+import {
+    DropdownMenu,
+    DropdownMenuCheckboxItem,
+    DropdownMenuContent,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Download, Search, Loader2 } from 'lucide-react';
 
 const MONTHS = [
@@ -34,10 +40,22 @@ export default function SalesReportFilters({
     isLoading,
     isExporting,
     statesList, // nova prop
-    activeTab // prop para esconder dimensões
+    activeTab, // prop para esconder dimensões
+    multiState = false // nova prop para habilitar selação múltipla no estado
 }) {
     const handleChange = (key, value) => {
         setFilters(prev => ({ ...prev, [key]: value }));
+    };
+
+    const handleMultiStateChange = (uf) => {
+        setFilters(prev => {
+            const currentStates = Array.isArray(prev.state) ? prev.state : [];
+            if (currentStates.includes(uf)) {
+                return { ...prev, state: currentStates.filter(s => s !== uf) };
+            } else {
+                return { ...prev, state: [...currentStates, uf] };
+            }
+        });
     };
 
     return (
@@ -46,20 +64,48 @@ export default function SalesReportFilters({
 
                 {/* Filtro Estado */}
                 <div className="w-full md:w-32 space-y-1.5">
-                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Estado</label>
-                    <Select
-                        value={filters.state}
-                        onValueChange={(val) => handleChange('state', val)}
-                    >
-                        <SelectTrigger className="w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700">
-                            <SelectValue placeholder="UF" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {statesList?.map(uf => (
-                                <SelectItem key={uf} value={uf}>{uf.toUpperCase()}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        {multiState ? 'Estados' : 'Estado'}
+                    </label>
+                    {multiState ? (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    className="w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 justify-start"
+                                >
+                                    {Array.isArray(filters.state) && filters.state.length > 0
+                                        ? `${filters.state.length} sel.`
+                                        : 'Selecione'}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-48 max-h-64 overflow-y-auto">
+                                {statesList?.map(uf => (
+                                    <DropdownMenuCheckboxItem
+                                        key={uf}
+                                        checked={Array.isArray(filters.state) && filters.state.includes(uf)}
+                                        onCheckedChange={() => handleMultiStateChange(uf)}
+                                    >
+                                        {uf.toUpperCase()}
+                                    </DropdownMenuCheckboxItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    ) : (
+                        <Select
+                            value={typeof filters.state === 'string' ? filters.state : ''}
+                            onValueChange={(val) => handleChange('state', val)}
+                        >
+                            <SelectTrigger className="w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700">
+                                <SelectValue placeholder="UF" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {statesList?.map(uf => (
+                                    <SelectItem key={uf} value={uf}>{uf.toUpperCase()}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
                 </div>
 
                 {/* Filtro Mês */}
