@@ -146,8 +146,30 @@ export default function FaturamentoDiario() {
     };
 
     const handleExport = async () => {
-        toast({ title: "Aviso", description: "A exportação para o faturamento diário ainda está em desenvolvimento." });
-        // Future export logic goes here
+        const currentStates = filters.state;
+        if (!currentStates || currentStates.length === 0 || !appliedFilters.month || !appliedFilters.year) {
+            toast({ title: "Filtros inválidos", description: "Por favor, busque resultados válidos antes de exportar.", variant: "destructive" });
+            return;
+        }
+
+        const params = {
+            states: currentStates.join(','),
+            month: appliedFilters.month,
+            year: appliedFilters.year,
+            startDay: appliedFilters.startDay,
+            endDay: appliedFilters.endDay,
+            reportType: reportType
+        };
+
+        if (reportType === 'consolidado') {
+            if (filters.branch) params.branch = filters.branch;
+        } else {
+            if (filters.salesperson) params.salesperson = filters.salesperson;
+            if (filters.branch) params.branch = filters.branch;
+        }
+
+        const exportUrl = api.reports.exportDailyBillingUrl(params);
+        window.open(exportUrl, '_blank');
     };
 
     // Calculate the target days array to show dynamically using the applied filters

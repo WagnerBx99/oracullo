@@ -117,7 +117,7 @@ export default function FaturamentoEstado() {
         if (filters.state) {
             fetchReportData(1);
         }
-         
+
     }, [filters.state, activeTab]); // Dispara também ao mudar de aba
 
     const handleApplyFilters = () => {
@@ -131,47 +131,25 @@ export default function FaturamentoEstado() {
     const handleExport = async () => {
         setIsExporting(true);
         try {
-            let url = '';
-            let fileName = '';
+            let exportUrl = '';
+
+            const params = {
+                month: filters.month,
+                year: filters.year,
+                // Passing state as part of the query payload now!
+                state: filters.state
+            };
 
             if (activeTab === 'vendas') {
-                url = api.reports.exportUrl(filters.state, {
-                    month: filters.month,
-                    year: filters.year,
-                    salesperson: filters.salesperson || '',
-                    branch: filters.branch || ''
-                });
-                fileName = `Relatorio_Vendas_${filters.state}_${filters.month}_${filters.year}.xlsx`;
+                if (filters.salesperson) params.salesperson = filters.salesperson;
+                if (filters.branch) params.branch = filters.branch;
+                exportUrl = api.reports.exportSalesStateUrl(params);
             } else {
-                url = api.reports.exportConsolidatedUrl(filters.state, {
-                    month: filters.month,
-                    year: filters.year
-                });
-                fileName = `Relatorio_Consolidado_${filters.state}_${filters.month}_${filters.year}.xlsx`;
+                exportUrl = api.reports.exportConsolidatedStateUrl(params);
             }
 
-            const config = { headers: { 'Authorization': `Bearer ${api.accessToken}` } };
-            const response = await fetch(url, config);
+            window.open(exportUrl, '_blank');
 
-            if (!response.ok) {
-                if (response.status === 422) {
-                    const errData = await response.json();
-                    throw new Error(errData.error || "Erro de validação.");
-                }
-                throw new Error('Falha ao baixar o relatório.');
-            }
-
-            const blob = await response.blob();
-            const downloadUrl = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = downloadUrl;
-            link.download = fileName;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            window.URL.revokeObjectURL(downloadUrl);
-
-            toast({ title: "Sucesso", description: "Exportação efetuada com sucesso!" });
         } catch (err) {
             toast({
                 title: "Erro na Exportação",

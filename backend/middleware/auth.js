@@ -3,31 +3,32 @@ import { verifyAccessToken } from '../utils/jwt.js';
 // Middleware para verificar autenticação
 export function authenticate(req, res, next) {
   try {
-    // Pegar token do header Authorization
+    // 1. Tentar pegar token do header Authorization
+    let token;
     const authHeader = req.headers.authorization;
-    
-    if (!authHeader) {
+
+    if (authHeader) {
+      const parts = authHeader.split(' ');
+      if (parts.length === 2 && parts[0] === 'Bearer') {
+        token = parts[1];
+      }
+    }
+
+    // 2. Se não veio no header, tentar da query string (útil p/ downloads do Excel via href/window.open)
+    if (!token && req.query.token) {
+      token = req.query.token;
+    }
+
+    if (!token) {
       return res.status(401).json({
         error: 'Token não fornecido',
         message: 'Você precisa estar autenticado para acessar este recurso'
       });
     }
 
-    // Formato esperado: "Bearer TOKEN"
-    const parts = authHeader.split(' ');
-    
-    if (parts.length !== 2 || parts[0] !== 'Bearer') {
-      return res.status(401).json({
-        error: 'Formato de token inválido',
-        message: 'Use o formato: Bearer {token}'
-      });
-    }
-
-    const token = parts[1];
-
     // Verificar token
     const decoded = verifyAccessToken(token);
-    
+
     // Adicionar dados do usuário na requisição
     req.user = {
       id: decoded.id,
@@ -50,14 +51,14 @@ export function authenticate(req, res, next) {
 export function optionalAuth(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
-    
+
     if (authHeader) {
       const parts = authHeader.split(' ');
-      
+
       if (parts.length === 2 && parts[0] === 'Bearer') {
         const token = parts[1];
         const decoded = verifyAccessToken(token);
-        
+
         req.user = {
           id: decoded.id,
           email: decoded.email,

@@ -343,13 +343,25 @@ class ApiClient {
       return this.request(`/reports/${state}/annual-consolidated${query ? '?' + query : ''}`);
     },
     filters: (state) => this.request(`/reports/${state}/sales/filters`),
-    exportUrl: (state, params) => {
+    exportSalesStateUrl: (params) => {
+      if (this.accessToken) params.token = this.accessToken;
       const query = new URLSearchParams(params).toString();
-      return `${this.baseURL}/reports/${state}/sales/export${query ? '?' + query : ''}`;
+      return `${this.baseURL}/reports/export/sales-state${query ? '?' + query : ''}`;
     },
-    exportConsolidatedUrl: (state, params) => {
+    exportConsolidatedStateUrl: (params) => {
+      if (this.accessToken) params.token = this.accessToken;
       const query = new URLSearchParams(params).toString();
-      return `${this.baseURL}/reports/${state}/consolidated/export${query ? '?' + query : ''}`;
+      return `${this.baseURL}/reports/export/consolidated-state${query ? '?' + query : ''}`;
+    },
+    exportAnnualConsolidatedUrl: (params) => {
+      if (this.accessToken) params.token = this.accessToken;
+      const query = new URLSearchParams(params).toString();
+      return `${this.baseURL}/reports/export/annual-consolidated${query ? '?' + query : ''}`;
+    },
+    exportDailyBillingUrl: (params) => {
+      if (this.accessToken) params.token = this.accessToken;
+      const query = new URLSearchParams(params).toString();
+      return `${this.baseURL}/reports/export/daily-billing${query ? '?' + query : ''}`;
     }
   };
 

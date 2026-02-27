@@ -86,7 +86,25 @@ export default function ConsolidadoAnual() {
         }
     };
 
+    const handleExport = () => {
+        if (!appliedFilters.state || appliedFilters.state.length === 0 || !appliedFilters.year || !appliedFilters.month || appliedFilters.month.length === 0) {
+            toast({
+                title: "Atenção",
+                description: "Selecione ao menos um estado, um ano e um mês para exportar.",
+                variant: "warning"
+            });
+            return;
+        }
 
+        const params = {
+            states: appliedFilters.state.join(','),
+            year: appliedFilters.year,
+            months: appliedFilters.month.join(',')
+        };
+
+        const exportUrl = api.reports.exportAnnualConsolidatedUrl(params);
+        window.open(exportUrl, '_blank');
+    };
 
     return (
         <div className="space-y-6">
@@ -101,7 +119,7 @@ export default function ConsolidadoAnual() {
                 filters={appliedFilters}
                 setFilters={setAppliedFilters}
                 onApply={() => handleApplyFilters(appliedFilters)}
-                onExport={() => { }}
+                onExport={handleExport}
                 statesList={statesList}
                 options={{ salespersons: [], branches: [] }}
                 isLoading={isLoading}
