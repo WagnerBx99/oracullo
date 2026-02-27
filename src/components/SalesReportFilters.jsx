@@ -42,7 +42,8 @@ export default function SalesReportFilters({
     statesList, // nova prop
     activeTab, // prop para esconder dimensões
     multiState = false, // nova prop para habilitar seleção múltipla no estado
-    multiMonth = false // nova prop para habilitar seleção múltipla no mês
+    multiMonth = false, // nova prop para habilitar seleção múltipla no mês
+    showDayRange = false // nova prop para dias no Faturamento Diário
 }) {
     const handleChange = (key, value) => {
         setFilters(prev => ({ ...prev, [key]: value }));
@@ -165,6 +166,34 @@ export default function SalesReportFilters({
                     )}
                 </div>
 
+                {/* Filtro Range de Dias (Tabela Diária) */}
+                {showDayRange && (
+                    <>
+                        <div className="w-full md:w-28 space-y-1.5">
+                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Dia Inicial</label>
+                            <Input
+                                type="number"
+                                value={filters.startDay}
+                                onChange={(e) => handleChange('startDay', Number(e.target.value))}
+                                className="w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700"
+                                min={1}
+                                max={31}
+                            />
+                        </div>
+                        <div className="w-full md:w-28 space-y-1.5">
+                            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Dia Final</label>
+                            <Input
+                                type="number"
+                                value={filters.endDay}
+                                onChange={(e) => handleChange('endDay', Number(e.target.value))}
+                                className="w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700"
+                                min={1}
+                                max={31}
+                            />
+                        </div>
+                    </>
+                )}
+
                 {/* Filtro Ano */}
                 <div className="w-full md:w-32 space-y-1.5">
                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Ano</label>
@@ -223,7 +252,12 @@ export default function SalesReportFilters({
                 <div className="flex gap-2 w-full md:w-auto">
                     <Button
                         onClick={onApply}
-                        disabled={isLoading || (multiMonth ? (!filters.month || filters.month.length === 0) : !filters.month) || !filters.year}
+                        disabled={
+                            isLoading
+                            || (multiMonth ? (!filters.month || filters.month.length === 0) : !filters.month)
+                            || !filters.year
+                            || (showDayRange && (!filters.startDay || !filters.endDay || filters.startDay > filters.endDay))
+                        }
                         className="flex-1 md:flex-none bg-gradient-to-r from-[#135670] to-[#ff5c00] text-white hover:opacity-90 shadow-md font-medium"
                     >
                         {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Search className="w-4 h-4 mr-2" />}

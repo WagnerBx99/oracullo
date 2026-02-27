@@ -86,37 +86,7 @@ export default function ConsolidadoAnual() {
         }
     };
 
-    // Calculate Global Summary across all active states
-    const globalSummary = {
-        total: { revenue: 0, cost: 0, qty: 0 }
-    };
-    for (let i = 1; i <= 12; i++) globalSummary[`month_${i}`] = { revenue: 0, cost: 0, qty: 0 };
 
-    reportsData.forEach(st => {
-        if (st.summary) {
-            globalSummary.total.revenue += st.summary.total.revenue;
-            globalSummary.total.cost += st.summary.total.cost;
-            globalSummary.total.qty += st.summary.total.qty;
-
-            for (let i = 1; i <= 12; i++) {
-                globalSummary[`month_${i}`].revenue += st.summary[`month_${i}`].revenue;
-                globalSummary[`month_${i}`].cost += st.summary[`month_${i}`].cost;
-                globalSummary[`month_${i}`].qty += st.summary[`month_${i}`].qty;
-            }
-        }
-    });
-
-    const calculateMargin = (metrics) => {
-        if (metrics.revenue === 0) return 0;
-        return ((metrics.revenue - metrics.cost) / metrics.revenue);
-    };
-
-    globalSummary.total.margin = calculateMargin(globalSummary.total);
-    for (let i = 1; i <= 12; i++) {
-        globalSummary[`month_${i}`].margin = calculateMargin(globalSummary[`month_${i}`]);
-    }
-
-    const formatCurrency = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
     return (
         <div className="space-y-6">
@@ -151,54 +121,18 @@ export default function ConsolidadoAnual() {
             )}
 
             {!isLoading && reportsData.map(({ state, data, summary }) => (
-                <div key={state} className="bg-white dark:bg-slate-900 rounded-lg shadow border border-slate-200 dark:border-slate-800 p-4">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{state} - Consolidado {appliedFilters.year}</h2>
-                    </div>
-
-                    <div className="overflow-x-auto">
-                        <AnnualConsolidatedTable
-                            data={data}
-                            summary={summary}
-                            year={appliedFilters.year}
-                            selectedMonths={appliedFilters.month}
-                        />
-                    </div>
+                <div key={state} className="mt-8 space-y-4">
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100">{state} - Consolidado {appliedFilters.year}</h2>
+                    <AnnualConsolidatedTable
+                        data={data}
+                        summary={summary}
+                        year={appliedFilters.year}
+                        selectedMonths={appliedFilters.month}
+                    />
                 </div>
             ))}
 
-            {!isLoading && reportsData.length > 0 && (
-                <div className="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-slate-800 dark:to-slate-950 rounded-xl shadow-xl overflow-hidden border border-slate-700">
-                    <div className="p-6 border-b border-slate-700/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                        <div>
-                            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                                Resumo Global - Todos os Estados
-                            </h2>
-                            <p className="text-slate-400 text-sm mt-1">Consolidação total do ano de {appliedFilters.year}</p>
-                        </div>
-                    </div>
-                    <div className="p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                            <div className="bg-slate-800/50 rounded-lg p-5 border border-slate-700">
-                                <p className="text-slate-400 text-sm font-medium mb-1">Faturamento Bruto Anual</p>
-                                <p className="text-3xl font-bold text-emerald-400">{formatCurrency(globalSummary.total.revenue)}</p>
-                            </div>
-                            <div className="bg-slate-800/50 rounded-lg p-5 border border-slate-700">
-                                <p className="text-slate-400 text-sm font-medium mb-1">Custo de Reposição Anual</p>
-                                <p className="text-3xl font-bold text-rose-400">{formatCurrency(globalSummary.total.cost)}</p>
-                            </div>
-                            <div className="bg-slate-800/50 rounded-lg p-5 border border-slate-700">
-                                <p className="text-slate-400 text-sm font-medium mb-1">Quantidade Total Vendida</p>
-                                <p className="text-3xl font-bold text-blue-400">{new Intl.NumberFormat('pt-BR').format(globalSummary.total.qty)} un/L</p>
-                            </div>
-                            <div className="bg-slate-800/50 rounded-lg p-5 border border-slate-700">
-                                <p className="text-slate-400 text-sm font-medium mb-1">Margem Global</p>
-                                <p className="text-3xl font-bold text-white">{(globalSummary.total.margin * 100).toFixed(2)}%</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+
         </div>
     );
 }

@@ -14,7 +14,7 @@ const formatCurrency = (val) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 };
 
-export default function DailyBillingConsolidatedTable({ data, summary, isLoading, targetDay, month }) {
+export default function DailyBillingConsolidatedTable({ data, summary, isLoading, days, month }) {
     // Keep track of which branches are expanded
     // null or empty array means none, but let's default to all collapsed for neatness, or all expanded?
     const [expandedBranches, setExpandedBranches] = useState({});
@@ -45,7 +45,11 @@ export default function DailyBillingConsolidatedTable({ data, summary, isLoading
         );
     }
 
-    const dayLabel = targetDay && month ? `${targetDay.toString().padStart(2, '0')}/${Number(month).toString().padStart(2, '0')}` : 'Dia';
+    const dArray = days && days.length > 0 ? days : [new Date().getDate()];
+    const getDayLabel = (d) => {
+        if (!month) return 'Dia';
+        return `${d.toString().padStart(2, '0')}/${Number(month).toString().padStart(2, '0')}`;
+    };
 
     return (
         <div className="rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm mt-4 overflow-hidden flex flex-col h-full">
@@ -54,9 +58,11 @@ export default function DailyBillingConsolidatedTable({ data, summary, isLoading
                     <TableHeader className="bg-slate-50 dark:bg-slate-900 sticky top-0 z-10 shadow-sm">
                         <TableRow className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                             <TableHead className="text-slate-900 dark:text-slate-200 font-semibold sticky left-0 z-20 bg-slate-50 dark:bg-slate-900 whitespace-nowrap min-w-[300px] border-r">Filial / Marca</TableHead>
-                            <TableHead className="text-slate-900 dark:text-slate-200 font-semibold text-right whitespace-nowrap min-w-[120px]">
-                                {dayLabel}
-                            </TableHead>
+                            {dArray.map(d => (
+                                <TableHead key={`th_cd_${d}`} className="text-slate-900 dark:text-slate-200 font-semibold text-right whitespace-nowrap min-w-[120px]">
+                                    {getDayLabel(d)}
+                                </TableHead>
+                            ))}
                             <TableHead className="text-slate-900 dark:text-slate-200 font-semibold text-right bg-blue-50 dark:bg-blue-900/20 whitespace-nowrap min-w-[120px]">
                                 Total Mensal
                             </TableHead>
@@ -77,9 +83,11 @@ export default function DailyBillingConsolidatedTable({ data, summary, isLoading
                                             {isExpanded ? <ChevronDown className="h-4 w-4 text-slate-500" /> : <ChevronRight className="h-4 w-4 text-slate-500" />}
                                             {branchRow.branch}
                                         </TableCell>
-                                        <TableCell className="text-right font-semibold text-slate-700 dark:text-slate-300">
-                                            {branchRow[`day_${targetDay}`] > 0 ? formatCurrency(branchRow[`day_${targetDay}`]) : '-'}
-                                        </TableCell>
+                                        {dArray.map(d => (
+                                            <TableCell key={`td_cb_${d}`} className="text-right font-semibold text-slate-700 dark:text-slate-300">
+                                                {branchRow[`day_${d}`] > 0 ? formatCurrency(branchRow[`day_${d}`]) : '-'}
+                                            </TableCell>
+                                        ))}
                                         <TableCell className="text-right font-bold text-blue-800 dark:text-blue-300 bg-blue-100/30 dark:bg-blue-900/40">
                                             {formatCurrency(branchRow.total)}
                                         </TableCell>
@@ -94,9 +102,11 @@ export default function DailyBillingConsolidatedTable({ data, summary, isLoading
                                             <TableCell className="sticky left-0 z-10 bg-white dark:bg-slate-900 group-hover:bg-muted/50 whitespace-nowrap border-r pl-8 text-slate-600 dark:text-slate-400">
                                                 {brandRow.brand}
                                             </TableCell>
-                                            <TableCell className="text-right text-slate-500 font-medium">
-                                                {brandRow[`day_${targetDay}`] > 0 ? formatCurrency(brandRow[`day_${targetDay}`]) : '-'}
-                                            </TableCell>
+                                            {dArray.map(d => (
+                                                <TableCell key={`td_cb2_${d}`} className="text-right text-slate-500 font-medium">
+                                                    {brandRow[`day_${d}`] > 0 ? formatCurrency(brandRow[`day_${d}`]) : '-'}
+                                                </TableCell>
+                                            ))}
                                             <TableCell className="text-right font-medium text-blue-700 dark:text-blue-400 bg-blue-50/20 dark:bg-blue-900/10">
                                                 {formatCurrency(brandRow.total)}
                                             </TableCell>
@@ -109,9 +119,11 @@ export default function DailyBillingConsolidatedTable({ data, summary, isLoading
                         {summary && (
                             <TableRow className="bg-slate-100 dark:bg-slate-800 font-bold sticky bottom-0 z-10 shadow-[0_-1px_3px_rgba(0,0,0,0.1)]">
                                 <TableCell className="sticky left-0 z-20 bg-slate-100 dark:bg-slate-800 border-r border-t">TOTAL GLOBAL</TableCell>
-                                <TableCell className="text-right font-bold border-t">
-                                    {summary[`day_${targetDay}`] > 0 ? formatCurrency(summary[`day_${targetDay}`]) : '-'}
-                                </TableCell>
+                                {dArray.map(d => (
+                                    <TableCell key={`td_cs_${d}`} className="text-right font-bold border-t">
+                                        {summary[`day_${d}`] > 0 ? formatCurrency(summary[`day_${d}`]) : '-'}
+                                    </TableCell>
+                                ))}
                                 <TableCell className="text-right text-blue-700 dark:text-blue-400 border-t">
                                     {formatCurrency(summary.total)}
                                 </TableCell>

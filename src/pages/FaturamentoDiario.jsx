@@ -14,6 +14,8 @@ export default function FaturamentoDiario() {
         state: [],
         month: new Date().getMonth() + 1,
         year: new Date().getFullYear(),
+        startDay: new Date().getDate(),
+        endDay: new Date().getDate(),
         salesperson: '',
         branch: ''
     });
@@ -26,7 +28,9 @@ export default function FaturamentoDiario() {
     // State to hold the filters that were actually applied and used to fetch the current data
     const [appliedFilters, setAppliedFilters] = useState({
         month: new Date().getMonth() + 1,
-        year: new Date().getFullYear()
+        year: new Date().getFullYear(),
+        startDay: new Date().getDate(),
+        endDay: new Date().getDate()
     });
 
     // Store responses mapped by state name: [{ state: 'PR', data: [...], summary: {...}, metadata: {...} }]
@@ -111,7 +115,12 @@ export default function FaturamentoDiario() {
 
             const results = await Promise.all(promises);
             setReportsData(results);
-            setAppliedFilters({ month: filters.month, year: filters.year });
+            setAppliedFilters({
+                month: filters.month,
+                year: filters.year,
+                startDay: filters.startDay || 1,
+                endDay: filters.endDay || 31
+            });
 
         } catch (err) {
             toast({
@@ -141,19 +150,28 @@ export default function FaturamentoDiario() {
         // Future export logic goes here
     };
 
-    // Calculate the target day to show dynamically using the applied filters
-    const now = new Date();
-    const isCurrentMonth = Number(appliedFilters.year) === now.getFullYear() && Number(appliedFilters.month) === (now.getMonth() + 1);
-    const targetDay = isCurrentMonth ? now.getDate() : new Date(appliedFilters.year, appliedFilters.month, 0).getDate();
+    // Calculate the target days array to show dynamically using the applied filters
+    const generateDaysArray = (start, end) => {
+        const s = Math.max(1, start || 1);
+        const e = Math.max(s, end || 31);
+        const arr = [];
+        for (let i = s; i <= e; i++) {
+            arr.push(i);
+        }
+        return arr;
+    };
+    const daysArray = generateDaysArray(appliedFilters.startDay, appliedFilters.endDay);
 
-    // Calculate global summary across all active states
+    // Calculate global summary across all active states for the specific period spanned
     const globalSummary = reportsData.reduce((acc, report) => {
         if (report.summary) {
             acc.total += report.summary.total || 0;
-            acc.dayTotal += report.summary[`day_${targetDay}`] || 0;
+            daysArray.forEach(d => {
+                acc.periodTotal += report.summary[`day_${d}`] || 0;
+            });
         }
         return acc;
-    }, { total: 0, dayTotal: 0 });
+    }, { total: 0, periodTotal: 0 });
 
     return (
         <div className="flex flex-col space-y-4 h-[calc(100vh-80px)]">
@@ -188,6 +206,7 @@ export default function FaturamentoDiario() {
                     statesList={statesList}
                     activeTab={reportType}
                     multiState={true}
+                    showDayRange={true}
                 />
             </div>
 
@@ -203,7 +222,7 @@ export default function FaturamentoDiario() {
                                     data={report.data}
                                     summary={report.summary}
                                     isLoading={isLoading}
-                                    targetDay={targetDay}
+                                    days={daysArray}
                                     month={appliedFilters.month}
                                 />
                             ) : (
@@ -211,7 +230,7 @@ export default function FaturamentoDiario() {
                                     data={report.data}
                                     summary={report.summary}
                                     isLoading={isLoading}
-                                    targetDay={targetDay}
+                                    days={daysArray}
                                     month={appliedFilters.month}
                                 />
                             )}
@@ -234,10 +253,10 @@ export default function FaturamentoDiario() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="bg-white dark:bg-slate-900 p-4 rounded-md border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center">
                                 <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">
-                                    Vendas em {targetDay.toString().padStart(2, '0')}/{Number(appliedFilters.month).toString().padStart(2, '0')}
+                                    Total do Período ({daysArray.length} {daysArray.length === 1 ? 'dia' : 'dias'})
                                 </span>
                                 <span className="text-2xl font-bold text-slate-800 dark:text-slate-100 mt-1">
-                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(globalSummary.dayTotal)}
+                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(globalSummary.periodTotal)}
                                 </span>
                             </div>
                             <div className="bg-white dark:bg-slate-900 p-4 rounded-md border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center">

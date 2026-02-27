@@ -64,7 +64,7 @@ export default function AnnualConsolidatedTable({ data, summary, isLoading, year
     const monthNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
     return (
-        <div className="rounded-md border border-slate-200 dark:border-slate-800 overflow-hidden bg-white dark:bg-slate-950 shadow-sm relative w-full h-[600px] overflow-scroll">
+        <div className="rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm relative w-full overflow-x-auto">
             <Table className="w-max min-w-full text-xs">
                 <TableHeader className="sticky top-0 z-20 bg-slate-50 dark:bg-slate-900/95 backdrop-blur-sm border-b border-slate-200 dark:border-slate-800">
                     <TableRow className="hover:bg-transparent">
