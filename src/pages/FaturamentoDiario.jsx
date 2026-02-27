@@ -23,6 +23,12 @@ export default function FaturamentoDiario() {
     const [statesList, setStatesList] = useState([]);
     const [filterOptions, setFilterOptions] = useState({ salespersons: [], branches: [] });
 
+    // State to hold the filters that were actually applied and used to fetch the current data
+    const [appliedFilters, setAppliedFilters] = useState({
+        month: new Date().getMonth() + 1,
+        year: new Date().getFullYear()
+    });
+
     // Store responses mapped by state name: [{ state: 'PR', data: [...], summary: {...}, metadata: {...} }]
     const [reportsData, setReportsData] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -105,6 +111,7 @@ export default function FaturamentoDiario() {
 
             const results = await Promise.all(promises);
             setReportsData(results);
+            setAppliedFilters({ month: filters.month, year: filters.year });
 
         } catch (err) {
             toast({
@@ -133,6 +140,20 @@ export default function FaturamentoDiario() {
         toast({ title: "Aviso", description: "A exportação para o faturamento diário ainda está em desenvolvimento." });
         // Future export logic goes here
     };
+
+    // Calculate the target day to show dynamically using the applied filters
+    const now = new Date();
+    const isCurrentMonth = Number(appliedFilters.year) === now.getFullYear() && Number(appliedFilters.month) === (now.getMonth() + 1);
+    const targetDay = isCurrentMonth ? now.getDate() : new Date(appliedFilters.year, appliedFilters.month, 0).getDate();
+
+    // Calculate global summary across all active states
+    const globalSummary = reportsData.reduce((acc, report) => {
+        if (report.summary) {
+            acc.total += report.summary.total || 0;
+            acc.dayTotal += report.summary[`day_${targetDay}`] || 0;
+        }
+        return acc;
+    }, { total: 0, dayTotal: 0 });
 
     return (
         <div className="flex flex-col space-y-4 h-[calc(100vh-80px)]">
@@ -165,7 +186,7 @@ export default function FaturamentoDiario() {
                     isLoading={isLoading}
                     isExporting={isExporting}
                     statesList={statesList}
-                    activeTab="vendas"
+                    activeTab={reportType}
                     multiState={true}
                 />
             </div>
@@ -182,14 +203,16 @@ export default function FaturamentoDiario() {
                                     data={report.data}
                                     summary={report.summary}
                                     isLoading={isLoading}
-                                    daysInMonth={report.metadata?.daysInMonth || 31}
+                                    targetDay={targetDay}
+                                    month={appliedFilters.month}
                                 />
                             ) : (
                                 <DailyBillingTable
                                     data={report.data}
                                     summary={report.summary}
                                     isLoading={isLoading}
-                                    daysInMonth={report.metadata?.daysInMonth || 31}
+                                    targetDay={targetDay}
+                                    month={appliedFilters.month}
                                 />
                             )}
                         </div>
@@ -199,6 +222,31 @@ export default function FaturamentoDiario() {
                 {!isLoading && reportsData.length === 0 && (
                     <div className="flex justify-center items-center h-64 border rounded-md bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm mt-4">
                         <p className="text-slate-500 dark:text-slate-400">Nenhum estado selecionado ou dados não encontrados.</p>
+                    </div>
+                )}
+
+                {/* Global Summary Segment */}
+                {reportsData.length > 0 && !isLoading && (
+                    <div className="mt-8 bg-blue-50 dark:bg-slate-800 rounded-lg p-6 border border-blue-100 dark:border-slate-700 shadow-sm">
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
+                            Resumo Consolidado (Todas as Filiais Visíveis)
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="bg-white dark:bg-slate-900 p-4 rounded-md border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center">
+                                <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                                    Vendas em {targetDay.toString().padStart(2, '0')}/{Number(appliedFilters.month).toString().padStart(2, '0')}
+                                </span>
+                                <span className="text-2xl font-bold text-slate-800 dark:text-slate-100 mt-1">
+                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(globalSummary.dayTotal)}
+                                </span>
+                            </div>
+                            <div className="bg-white dark:bg-slate-900 p-4 rounded-md border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center">
+                                <span className="text-sm text-slate-500 dark:text-slate-400 font-medium">Total do Mês</span>
+                                <span className="text-2xl font-bold text-blue-700 dark:text-blue-400 mt-1">
+                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(globalSummary.total)}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>
