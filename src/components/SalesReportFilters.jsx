@@ -41,7 +41,8 @@ export default function SalesReportFilters({
     isExporting,
     statesList, // nova prop
     activeTab, // prop para esconder dimensões
-    multiState = false // nova prop para habilitar selação múltipla no estado
+    multiState = false, // nova prop para habilitar seleção múltipla no estado
+    multiMonth = false // nova prop para habilitar seleção múltipla no mês
 }) {
     const handleChange = (key, value) => {
         setFilters(prev => ({ ...prev, [key]: value }));
@@ -110,20 +111,58 @@ export default function SalesReportFilters({
 
                 {/* Filtro Mês */}
                 <div className="w-full md:w-48 space-y-1.5">
-                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Mês</label>
-                    <Select
-                        value={filters.month?.toString()}
-                        onValueChange={(val) => handleChange('month', Number(val))}
-                    >
-                        <SelectTrigger className="w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700">
-                            <SelectValue placeholder="Selecione o mês" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {MONTHS.map(m => (
-                                <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        {multiMonth ? 'Meses' : 'Mês'}
+                    </label>
+                    {multiMonth ? (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    className="w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 justify-start"
+                                >
+                                    {Array.isArray(filters.month) && filters.month.length > 0
+                                        ? `${filters.month.length} selecionado(s)`
+                                        : 'Selecione'}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-48 max-h-64 overflow-y-auto">
+                                {MONTHS.map(m => (
+                                    <DropdownMenuCheckboxItem
+                                        key={m.value}
+                                        checked={Array.isArray(filters.month) && filters.month.includes(Number(m.value))}
+                                        onCheckedChange={() => {
+                                            const num = Number(m.value);
+                                            setFilters(prev => {
+                                                const currentMonths = Array.isArray(prev.month) ? prev.month : [];
+                                                if (currentMonths.includes(num)) {
+                                                    return { ...prev, month: currentMonths.filter(x => x !== num) };
+                                                } else {
+                                                    return { ...prev, month: [...currentMonths, num].sort((a, b) => a - b) };
+                                                }
+                                            });
+                                        }}
+                                    >
+                                        {m.label}
+                                    </DropdownMenuCheckboxItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    ) : (
+                        <Select
+                            value={filters.month?.toString()}
+                            onValueChange={(val) => handleChange('month', Number(val))}
+                        >
+                            <SelectTrigger className="w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700">
+                                <SelectValue placeholder="Selecione o mês" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {MONTHS.map(m => (
+                                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
                 </div>
 
                 {/* Filtro Ano */}
@@ -184,7 +223,7 @@ export default function SalesReportFilters({
                 <div className="flex gap-2 w-full md:w-auto">
                     <Button
                         onClick={onApply}
-                        disabled={isLoading || !filters.month || !filters.year}
+                        disabled={isLoading || (multiMonth ? (!filters.month || filters.month.length === 0) : !filters.month) || !filters.year}
                         className="flex-1 md:flex-none bg-gradient-to-r from-[#135670] to-[#ff5c00] text-white hover:opacity-90 shadow-md font-medium"
                     >
                         {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Search className="w-4 h-4 mr-2" />}
@@ -193,7 +232,7 @@ export default function SalesReportFilters({
 
                     <Button
                         onClick={onExport}
-                        disabled={isLoading || isExporting || !filters.month || !filters.year}
+                        disabled={isLoading || isExporting || (multiMonth ? (!filters.month || filters.month.length === 0) : !filters.month) || !filters.year}
                         variant="outline"
                         className="flex-1 md:flex-none border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                     >

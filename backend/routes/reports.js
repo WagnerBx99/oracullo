@@ -5,6 +5,7 @@ import ExcelJS from 'exceljs';
 import ConsolidatedReportService from '../services/consolidated-report.service.js';
 import DailyBillingService from '../services/DailyBillingService.js';
 import DailyBillingConsolidatedService from '../services/DailyBillingConsolidatedService.js';
+import AnnualConsolidatedService from '../services/AnnualConsolidatedService.js';
 import {
     updateSaleCommission,
     updateUnitCost,
@@ -490,6 +491,28 @@ router.get('/:state/daily-billing-consolidated', async (req, res) => {
     } catch (error) {
         console.error('[ReportsController] Erro ao buscar faturamento diário consolidado:', error);
         res.status(500).json({ error: 'Erro ao buscar faturamento diário consolidado', details: error.message });
+    }
+});
+
+// Endpoint: Relatório Consolidado Anual
+router.get('/:state/annual-consolidated', async (req, res) => {
+    try {
+        const state = req.params.state?.toUpperCase();
+        if (!state || state.length !== 2) {
+            return res.status(400).json({ error: 'Estado (UF) inválido.' });
+        }
+
+        const { year } = req.query;
+        if (!year) {
+            return res.status(400).json({ error: 'Ano é um filtro obrigatório.' });
+        }
+
+        const report = await AnnualConsolidatedService.buildAnnualConsolidatedReport(state, { year });
+
+        res.json(report);
+    } catch (error) {
+        console.error('[ReportsController] Erro ao buscar relatório consolidado anual:', error);
+        res.status(500).json({ error: 'Erro ao buscar relatório consolidado anual', details: error.message });
     }
 });
 

@@ -14,6 +14,7 @@ import Relatorios from './pages/Relatorios';
 import RelatoriosDesenvolvimento from './pages/RelatoriosDesenvolvimento';
 import FaturamentoEstado from './pages/FaturamentoEstado';
 import FaturamentoDiario from './pages/FaturamentoDiario';
+import ConsolidadoAnual from './pages/ConsolidadoAnual';
 import __Layout from './Layout.jsx';
 
 export const PAGES = {
@@ -32,6 +33,7 @@ export const PAGES = {
     "RelatoriosDesenvolvimento": RelatoriosDesenvolvimento,
     "faturamento_estado": FaturamentoEstado,
     "faturamento_diario": FaturamentoDiario,
+    "consolidado_anual": ConsolidadoAnual,
 }
 
 export const pagesConfig = {

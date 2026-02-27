@@ -338,6 +338,10 @@ class ApiClient {
       const query = new URLSearchParams(params).toString();
       return this.request(`/reports/${state}/daily-billing-consolidated${query ? '?' + query : ''}`);
     },
+    annualConsolidated: (state, params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/reports/${state}/annual-consolidated${query ? '?' + query : ''}`);
+    },
     filters: (state) => this.request(`/reports/${state}/sales/filters`),
     exportUrl: (state, params) => {
       const query = new URLSearchParams(params).toString();
