@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, RefreshCw } from 'lucide-react';
 import { FileDown, Filter, Send, CheckCircle } from 'lucide-react';
 import { motion } from "framer-motion";
 import StatsCard from '@/components/dashboard/StatsCard';
@@ -21,6 +24,8 @@ import api from '@/api/apiClient';
 
 export default function GestaoPrecos() {
   const queryClient = useQueryClient();
+
+
   const [showSyncDialog, setShowSyncDialog] = useState(false);
   const [syncInProgress, setSyncInProgress] = useState(false);
 
@@ -40,6 +45,36 @@ export default function GestaoPrecos() {
     }
   });
 
+  const [filters, setFilters] = useState({
+    search: '',
+    marca: 'Todas',
+    filial: 'Todas',
+    status: 'Todos',
+    ativo: 'Todos'
+  });
+
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  const filteredProdutos = produtos.filter(p => {
+    const matchesSearch = !filters.search || 
+      p.nome?.toLowerCase().includes(filters.search.toLowerCase()) || 
+      p.codigo?.toLowerCase().includes(filters.search.toLowerCase());
+    
+    const matchesMarca = filters.marca === 'Todas' || p.marca === filters.marca;
+    const matchesFilial = filters.filial === 'Todas' || p.filial === filters.filial;
+    const matchesStatus = filters.status === 'Todos' || 
+      (filters.status === 'Com Novo Preço' ? p.novo_preco : !p.novo_preco);
+    const matchesAtivo = filters.ativo === 'Todos' || 
+      (filters.ativo === 'Ativo' ? p.status === 'ativo' : p.status === 'inativo');
+
+    return matchesSearch && matchesMarca && matchesFilial && matchesStatus && matchesAtivo;
+  });
+
+  const marcas = ['Todas', ...new Set(produtos.map(p => p.marca).filter(Boolean))];
+  const filiais = ['Todas', ...new Set(produtos.map(p => p.filial).filter(Boolean))];
+
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }) => {}, // Base44 removido
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['produtos'] })
@@ -50,17 +85,18 @@ export default function GestaoPrecos() {
   };
 
   const handleExportar = () => {
-    const dados = produtos.map(produto => {
+    const dados = filteredProdutos.map(produto => {
       const margem = produto.margem || 0;
       return {
         'Código': produto.codigo,
+        'Marca': produto.marca || 'N/A',
+        'Filial': produto.filial || 'N/A',
         'Nome': produto.nome,
-        'Categoria': produto.categoria || 'N/A',
         'Custo': produto.custo || 0,
         'Preço Venda': produto.preco_venda || 0,
         'Novo Preço': produto.novo_preco || produto.preco_venda || 0,
         'Margem (%)': margem,
-        'Fonte': produto.fonte || 'N/A',
+        
         'Status': produto.status || 'ativo'
       };
     });
@@ -216,7 +252,11 @@ export default function GestaoPrecos() {
   };
 
   // Calculate stats
-  console.log('=== GESTAO PRECOS DEBUG ===');
+    console.log('=== GESTAO PRECOS DEBUG ===');
+  if (produtos && produtos.length > 0) {
+    console.log('Primeiro produto:', produtos[0]);
+    console.log('Propriedades do produto:', Object.keys(produtos[0]));
+  }
   console.log('stats raw:', stats);
   console.log('stats.total_produtos:', stats?.total_produtos, 'type:', typeof stats?.total_produtos);
   console.log('stats.custo_medio:', stats?.custo_medio, 'type:', typeof stats?.custo_medio);
@@ -311,43 +351,94 @@ export default function GestaoPrecos() {
         </div>
       </motion.div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatsCard
-          title="Total de Produtos"
-          value={totalProdutos.toLocaleString('pt-BR')}
-          subtitle="Consolidado ERP/CRM"
-          icon={Package}
-          color="blue"
-          isLoading={isLoading}
-        />
-        <StatsCard
-          title="Custo Médio"
-          value={`R$ ${Number(custoMedio || 0).toFixed(2)}`}
-          icon={DollarSign}
-          color="green"
-          isLoading={isLoading}
-        />
-        <StatsCard
-          title="Margem Média"
-          value={`${Number(margemMedia || 0).toFixed(1)}%`}
-          icon={Percent}
-          color="purple"
-          trend={margemMedia > 0 ? 2.5 : 0}
-          isLoading={isLoading}
-        />
-        <StatsCard
-          title="Novos Preços"
-          value={produtosComNovoPreco}
-          subtitle={`de ${totalProdutos} produtos`}
-          icon={TrendingUp}
-          color="orange"
-        />
+            {/* Barra de Filtragem */}
+      <div className="bg-card p-4 rounded-xl border shadow-sm mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-muted-foreground">Buscar Produto</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input 
+                placeholder="Nome ou código..." 
+                className="pl-9"
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-muted-foreground">Marca</label>
+            <Select value={filters.marca} onValueChange={(val) => handleFilterChange('marca', val)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Todas" />
+              </SelectTrigger>
+              <SelectContent>
+                {marcas.map(m => (
+                  <SelectItem key={m} value={m}>{m}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-muted-foreground">Filial</label>
+            <Select value={filters.filial} onValueChange={(val) => handleFilterChange('filial', val)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Todas" />
+              </SelectTrigger>
+              <SelectContent>
+                {filiais.map(f => (
+                  <SelectItem key={f} value={f}>{f}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-muted-foreground">Status Preço</label>
+            <Select value={filters.status} onValueChange={(val) => handleFilterChange('status', val)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Todos">Todos</SelectItem>
+                <SelectItem value="Com Novo Preço">Com Novo Preço</SelectItem>
+                <SelectItem value="Sem Alteração">Sem Alteração</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-muted-foreground">Ativo / Inativo</label>
+            <Select value={filters.ativo} onValueChange={(val) => handleFilterChange('ativo', val)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Todos">Todos</SelectItem>
+                <SelectItem value="Ativo">Ativo</SelectItem>
+                <SelectItem value="Inativo">Inativo</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="lg:col-span-5 flex justify-end">
+            <Button 
+              variant="outline" 
+              className="gap-2"
+              onClick={() => setFilters({ search: '', marca: 'Todas', filial: 'Todas', status: 'Todos', ativo: 'Todos' })}
+            >
+              <RefreshCw className="w-4 h-4" />
+              Limpar Filtros
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Tabela Principal */}
       <CustoVendaTable 
-        produtos={produtos} 
+        produtos={filteredProdutos} 
         onUpdateProduto={handleUpdateProduto}
       />
     </div>

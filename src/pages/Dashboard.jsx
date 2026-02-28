@@ -119,7 +119,7 @@ export default function Dashboard() {
         />
         <StatsCard
           title="Receita Total"
-          value={`R$ ${Number((receitaTotal / 1000) || 0).toFixed(1)}K`}
+          value={`R$ ${Number(receitaTotal || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           subtitle={`${variacaoReceita > 0 ? '+' : ''}${variacaoReceita}% vs mês anterior`}
           icon={DollarSign}
           color="green"

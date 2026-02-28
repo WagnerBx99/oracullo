@@ -16,11 +16,13 @@ import {
   Menu,
   X,
   Moon,
-  Sun
+  Sun,
+  Lock
 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "@/components/ui/use-toast";
 
 export default function Layout({ children, currentPageName }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -63,7 +65,13 @@ export default function Layout({ children, currentPageName }) {
       submenu: [
         { label: 'Dashboard Diretoria', page: 'Diretoria' },
         { label: 'Custo x Venda', page: 'GestaoPrecos' },
-        { label: 'Ajuste de Margem', page: 'Manipulaveis' }
+        { label: 'Ajuste de Margem', page: 'Manipulaveis' },
+        { label: 'Faturamento por Estado', page: 'faturamento_estado' },
+        { label: 'Faturamento Diário', page: 'faturamento_diario' },
+        { label: 'Consolidado Anual', page: 'consolidado_anual' },
+        { label: 'Fechamento de Comissões', page: 'FechamentoComissoes' },
+        { label: 'Quadro de Comissões 2026', page: 'QuadroComissoes' },
+        { label: 'Comissões de Gerentes', page: 'ComissoesGerentes' },
       ]
     },
     {
@@ -71,10 +79,7 @@ export default function Layout({ children, currentPageName }) {
       icon: Users,
       page: 'Comercial',
       submenu: [
-        { label: 'Dashboard Comercial', page: 'Comercial' },
-        { label: 'Faturamento por Estado', page: 'faturamento_estado' },
-        { label: 'Faturamento Diário', page: 'faturamento_diario' },
-        { label: 'Consolidado Anual', page: 'consolidado_anual' }
+        { label: 'Dashboard Comercial', page: 'Comercial' }
       ]
     },
     {
@@ -87,21 +92,10 @@ export default function Layout({ children, currentPageName }) {
       icon: Database,
       page: 'Integracoes',
       submenu: [
-        { label: 'ERP (OMIE/WK)', page: 'Integracoes' },
-        { label: 'CRM (Mercos/Clic)', page: 'Integracoes' },
-        { label: 'Input Manual', page: 'Formularios' }
+        { label: 'Sincronizações', page: 'Integracoes' },
+        { label: 'Input Manual', page: 'Formularios', locked: true }
       ]
     },
-    {
-      label: 'Relatórios Antigos',
-      icon: FileText,
-      page: 'Relatorios',
-      submenu: [
-        { label: 'Relatórios Atuais', page: 'Relatorios' },
-        { label: 'Em Desenvolvimento', page: 'RelatoriosDesenvolvimento' }
-      ]
-    },
-
     {
       label: 'Administração',
       icon: Settings,
@@ -121,6 +115,15 @@ export default function Layout({ children, currentPageName }) {
   const handleLogout = async () => {
     await logout();
     navigate('/login');
+  };
+
+  const handleLockedClick = (e) => {
+    e.preventDefault();
+    toast({
+      title: "Acesso Restrito",
+      description: "Sua credencial não dá permissão para uso dessa funcionalidade",
+      variant: "destructive"
+    });
   };
 
   const NavContent = () => (
@@ -155,7 +158,7 @@ export default function Layout({ children, currentPageName }) {
             item.submenu?.some(sub => currentPageName === sub.page);
 
           return (
-            <div key={item.page}>
+            <div key={item.label}>
               <Link to={createPageUrl(item.page)}>
                 <div className={`
                   flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
@@ -178,15 +181,27 @@ export default function Layout({ children, currentPageName }) {
                   className="ml-8 mt-2 space-y-1"
                 >
                   {item.submenu.map((sub) => (
-                    <Link key={sub.page} to={createPageUrl(sub.page)}>
+                    <Link 
+                      key={sub.label} 
+                      to={sub.locked ? '#' : createPageUrl(sub.page)}
+                      onClick={(e) => {
+                        if (sub.locked) {
+                          handleLockedClick(e);
+                        } else {
+                          setMobileOpen(false);
+                        }
+                      }}
+                    >
                       <div className={`
-                        px-4 py-2 rounded-lg text-sm transition-colors
+                        flex items-center justify-between px-4 py-2 rounded-lg text-sm transition-all
                         ${currentPageName === sub.page
                           ? 'text-[#ff5c00] bg-[#ff5c00]/10 font-medium'
                           : 'text-slate-400 hover:text-white hover:bg-slate-700/30'
                         }
+                        ${sub.locked ? 'opacity-60 cursor-not-allowed' : ''}
                       `}>
-                        {sub.label}
+                        <span>{sub.label}</span>
+                        {sub.locked && <Lock className="w-3 h-3 text-yellow-400" />}
                       </div>
                     </Link>
                   ))}
@@ -210,7 +225,6 @@ export default function Layout({ children, currentPageName }) {
             {!collapsed && <span>{theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}</span>}
           </Button>
         </div>
-
         <div className="p-4 border-t border-slate-700/50">
           <div className={`flex items-center gap-3 ${collapsed ? 'justify-center' : ''}`}>
             <Avatar className="w-10 h-10 border-2 border-[#ff5c00]">

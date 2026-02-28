@@ -489,6 +489,7 @@ router.patch('/sales/:id/check', updateCheckColumn);
 
 // Endpoint: Relatório de Vendas Principal
 router.get('/:state/sales', async (req, res) => {
+    
     try {
         const state = req.params.state?.toUpperCase();
         if (!state || state.length !== 2) {
@@ -524,10 +525,9 @@ router.get('/:state/sales', async (req, res) => {
                 const config = data.brandConfigs[brandKey] || null;
                 processedTransactions.push(calculateSalesRow(t, config));
             } catch (err) {
-                if (err.message.includes('Configuração de marca ausente')) {
-                    return res.status(422).json({ error: err.message });
-                }
-                throw err;
+                // Se a marca estiver ausente, apenas ignora a linha ou usa valores zerados em vez de travar o relatório todo
+                console.warn(`[Reports] Pulando linha devido a erro: ${err.message}`);
+                continue;
             }
         }
 
@@ -608,10 +608,9 @@ router.get('/:state/consolidated', async (req, res) => {
                 const config = data.brandConfigs[brandKey] || null;
                 processedTransactions.push(calculateSalesRow(t, config));
             } catch (err) {
-                if (err.message.includes('Configuração de marca ausente')) {
-                    return res.status(422).json({ error: err.message });
-                }
-                throw err;
+                // Se a marca estiver ausente, apenas ignora a linha ou usa valores zerados em vez de travar o relatório todo
+                console.warn(`[Reports] Pulando linha devido a erro: ${err.message}`);
+                continue;
             }
         }
 
@@ -1060,3 +1059,6 @@ router.get('/:state/annual-consolidated', async (req, res) => {
 });
 
 export default router;
+
+
+

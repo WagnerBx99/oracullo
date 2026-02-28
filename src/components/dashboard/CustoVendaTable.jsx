@@ -74,6 +74,7 @@ export default function CustoVendaTable({ produtos, onUpdateProduto }) {
             <TableHeader>
               <TableRow className="bg-muted/30">
                 <TableHead className="font-semibold text-muted-foreground">Código</TableHead>
+                <TableHead className="font-semibold text-muted-foreground">Marca</TableHead>
                 <TableHead className="font-semibold text-muted-foreground">Produto</TableHead>
                 <TableHead 
                   className="font-semibold text-muted-foreground cursor-pointer hover:text-foreground"
@@ -96,7 +97,7 @@ export default function CustoVendaTable({ produtos, onUpdateProduto }) {
                 <TableHead className="font-semibold text-muted-foreground">Margem</TableHead>
                 <TableHead className="font-semibold text-muted-foreground">Novo Preço</TableHead>
                 <TableHead className="font-semibold text-muted-foreground">Nova Margem</TableHead>
-                <TableHead className="font-semibold text-muted-foreground">Fonte</TableHead>
+                
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -115,6 +116,9 @@ export default function CustoVendaTable({ produtos, onUpdateProduto }) {
                     >
                       <TableCell className="font-mono text-sm text-muted-foreground">
                         {produto.codigo}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {produto.marca || "-"}
                       </TableCell>
                       <TableCell className="font-medium text-foreground">
                         {produto.nome}
@@ -191,11 +195,7 @@ export default function CustoVendaTable({ produtos, onUpdateProduto }) {
                           <span className="text-muted-foreground">-</span>
                         )}
                       </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="capitalize">
-                          {produto.fonte || 'manual'}
-                        </Badge>
-                      </TableCell>
+                      
                     </motion.tr>
                   );
                 })}

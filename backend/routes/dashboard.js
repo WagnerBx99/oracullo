@@ -134,42 +134,40 @@ router.get('/vendas-por-filial', async (req, res) => {
     const inicioMes = data_inicio || new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().split('T')[0];
     const fimMes = data_fim || new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).toISOString().split('T')[0];
     
+    // 1. Buscar filiais no DB Gestão
+    const filiaisResult = await poolGestao.query('SELECT id, nome FROM integracoes');
+    const filiaisMap = {};
+    filiaisResult.rows.forEach(f => { filiaisMap[f.id] = { ...f, filial: f.nome }; });
+
+    // 2. Buscar vendas no DB Analítico
     const query = `
       SELECT 
         v.integracao_id,
-        i.nome as nome_filial,
-        i.filial,
         SUM(v.total_vendas) as total_vendas,
         SUM(v.total_pedidos) as total_pedidos,
         AVG(v.ticket_medio) as ticket_medio
       FROM vendas_por_periodo v
-      INNER JOIN dblink(
-        'dbname=oracullo_gestao user=oracullo_user password=oracullo123',
-        'SELECT id, nome, filial FROM integracoes'
-      ) AS i(id integer, nome text, filial text)
-      ON v.integracao_id = i.id
       WHERE v.periodo BETWEEN $1 AND $2
-      GROUP BY v.integracao_id, i.nome, i.filial
+      GROUP BY v.integracao_id
       ORDER BY total_vendas DESC
     `;
     
     const result = await poolAnalitico.query(query, [inicioMes, fimMes]);
     
-    const totalGeral = result.rows.reduce((sum, row) => sum + parseFloat(row.total_vendas), 0);
+    const filiaisProcessadas = result.rows.map(row => ({
+      integracao_id: row.integracao_id,
+      nome: filiaisMap[row.integracao_id]?.nome || 'Desconhecida',
+      filial: filiaisMap[row.integracao_id]?.filial || 'N/A',
+      total_vendas: parseFloat(row.total_vendas),
+      total_pedidos: row.total_pedidos,
+      ticket_medio: parseFloat(row.ticket_medio)
+    }));
+
+    const totalGeral = filiaisProcessadas.reduce((sum, row) => sum + row.total_vendas, 0);
     
     res.json({
-      periodo: {
-        inicio: inicioMes,
-        fim: fimMes
-      },
-      filiais: result.rows.map(row => ({
-        integracao_id: row.integracao_id,
-        nome: row.nome_filial,
-        filial: row.filial,
-        total_vendas: parseFloat(row.total_vendas),
-        total_pedidos: row.total_pedidos,
-        ticket_medio: parseFloat(row.ticket_medio)
-      })),
+      periodo: { inicio: inicioMes, fim: fimMes },
+      filiais: filiaisProcessadas,
       total_geral: totalGeral
     });
     
@@ -329,3 +327,5 @@ router.get('/top-clientes', async (req, res) => {
 });
 
 export default router;
+
+

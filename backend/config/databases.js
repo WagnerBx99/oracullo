@@ -58,14 +58,12 @@ async function testConnections() {
   } catch (err) {
     console.error('❌ Erro ao conectar no DB Gestão:', err.message);
   }
-
   try {
     await poolTransacional.query('SELECT NOW()');
     console.log('✅ Conectado ao DB Transacional');
   } catch (err) {
     console.error('❌ Erro ao conectar no DB Transacional:', err.message);
   }
-
   try {
     await poolAnalitico.query('SELECT NOW()');
     console.log('✅ Conectado ao DB Analítico');
@@ -83,3 +81,4 @@ export {
 
 // Manter pool padrão para compatibilidade com código antigo
 export default poolGestao;
+

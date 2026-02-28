@@ -15,8 +15,10 @@ import RelatoriosDesenvolvimento from './pages/RelatoriosDesenvolvimento';
 import FaturamentoEstado from './pages/FaturamentoEstado';
 import FaturamentoDiario from './pages/FaturamentoDiario';
 import ConsolidadoAnual from './pages/ConsolidadoAnual';
+import FechamentoComissoes from './pages/FechamentoComissoes';
+import QuadroComissoes from './pages/QuadroComissoes';
+import ComissoesGerentes from './pages/ComissoesGerentes';
 import __Layout from './Layout.jsx';
-
 export const PAGES = {
     "BancoDados": BancoDados,
     "Comercial": Comercial,
@@ -34,8 +36,10 @@ export const PAGES = {
     "faturamento_estado": FaturamentoEstado,
     "faturamento_diario": FaturamentoDiario,
     "consolidado_anual": ConsolidadoAnual,
+    "FechamentoComissoes": FechamentoComissoes,
+    "QuadroComissoes": QuadroComissoes,
+    "ComissoesGerentes": ComissoesGerentes,
 }
-
 export const pagesConfig = {
     mainPage: "Dashboard",
     Pages: PAGES,

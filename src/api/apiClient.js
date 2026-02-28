@@ -384,6 +384,10 @@ class ApiClient {
       return this.request(`/diretoria/distribuicao-receita${query ? '?' + query : ''}`);
     },
 
+    comissoes: (params) => {
+      const query = new URLSearchParams(params).toString();
+      return this.request(`/diretoria/comissoes${query ? '?' + query : ''}`);
+    },
     performance: () => this.request('/diretoria/performance'),
   };
 

@@ -28,10 +28,11 @@ router.get('/', async (req, res) => {
         p.unidade,
         p.estoque,
         p.ativo,
+        COALESCE(p.data_json->>'marca', '-') as marca,
+        COALESCE(p.data_json->>'filial', 'Matriz') as filial,
         'Consolidado' as fonte,
         'ERP' as tipo_integracao
       FROM produtos p
-      WHERE p.ativo = true
       ORDER BY p.codigo, p.id DESC
     `;
     

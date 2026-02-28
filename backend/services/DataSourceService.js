@@ -11,7 +11,6 @@ export class DataSourceService {
      */
     async getSales(state, filters = {}) {
         if (!state) throw new Error('Estado (UF) é obrigatório');
-
         try {
             let salesQuery = `
                 SELECT s.*, p.unit_volume as packaging_type 
@@ -26,29 +25,26 @@ export class DataSourceService {
                 salesQuery += ` AND s.ref_month = $${paramIndex++}`;
                 params.push(parseInt(filters.month));
             }
-
             if (filters.year) {
                 salesQuery += ` AND s.ref_year = $${paramIndex++}`;
                 params.push(parseInt(filters.year));
             }
-
             if (filters.salesperson) {
                 salesQuery += ` AND s.salesperson = $${paramIndex++}`;
                 params.push(filters.salesperson);
             }
-
             if (filters.branch) {
                 salesQuery += ` AND s.branch = $${paramIndex++}`;
                 params.push(filters.branch);
             }
 
             salesQuery += ` ORDER BY s.sale_date DESC`;
-
+            
             const salesResult = await poolAnalitico.query(salesQuery, params);
-
+            
             const brandsQuery = `SELECT * FROM brand_configs`;
             const brandsResult = await poolAnalitico.query(brandsQuery);
-
+            
             const brandConfigsMap = brandsResult.rows.reduce((acc, row) => {
                 if (row.brand) {
                     acc[row.brand.trim()] = row;
@@ -84,7 +80,6 @@ export class DataSourceService {
      */
     async getFiltersOptions(state) {
         if (!state) throw new Error('Estado (UF) é obrigatório');
-
         try {
             const result = await poolAnalitico.query(`
                 SELECT DISTINCT salesperson, branch 
@@ -112,3 +107,4 @@ export class DataSourceService {
 }
 
 export default new DataSourceService();
+

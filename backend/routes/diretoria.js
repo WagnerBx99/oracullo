@@ -331,3 +331,114 @@ router.get('/performance', async (req, res) => {
 });
 
 export default router;
+
+/**
+ * GET /api/diretoria/comissoes
+ * Retorna dados de comissões consolidadas
+ * Query params: mes (1-12, padrão: 1), ano (padrão: 2026)
+ */
+router.get('/comissoes', async (req, res) => {
+  try {
+    const mes = parseInt(req.query.mes) || 1;
+    const ano = parseInt(req.query.ano) || 2026;
+    
+    // Construir data de referência
+    const ultimoDiaDoMes = new Date(ano, mes, 0).getDate();
+    const dataRef = `${ano}-${String(mes).padStart(2, '0')}-${String(ultimoDiaDoMes).padStart(2, '0')}`;
+    
+    // Query para obter dados de comissões
+    const comissoesQuery = await poolAnalitico.query(`
+      SELECT 
+        vendedor,
+        marca,
+        filial,
+        tipo_vendedor,
+        SUM(total_vendas) as total_vendas,
+        SUM(total_comissao) as total_comissao,
+        AVG(comissao_percentual) as comissao_percentual,
+        SUM(meta_valor) as meta_valor,
+        SUM(realizado_valor) as realizado_valor,
+        AVG(percentual_meta) as percentual_meta,
+        SUM(premio) as premio,
+        SUM(desconto) as desconto,
+        SUM(ajuda_custo) as ajuda_custo,
+        SUM(outros) as outros
+      FROM comissoes_consolidadas
+      WHERE DATE_TRUNC('month', data_referencia) = DATE_TRUNC('month', $1::date)
+      GROUP BY vendedor, marca, filial, tipo_vendedor
+      ORDER BY total_vendas DESC
+    `, [dataRef]);
+    
+    // Resumo geral
+    const resumoQuery = await poolAnalitico.query(`
+      SELECT 
+        COUNT(DISTINCT vendedor) as total_vendedores,
+        SUM(total_vendas) as total_vendas_geral,
+        SUM(total_comissao) as total_comissoes_geral,
+        AVG(percentual_meta) as percentual_meta_medio,
+        SUM(premio) as total_premios,
+        SUM(ajuda_custo) as total_ajuda_custo
+      FROM comissoes_consolidadas
+      WHERE DATE_TRUNC('month', data_referencia) = DATE_TRUNC('month', $1::date)
+    `, [dataRef]);
+    
+    // Distribuição por tipo de vendedor
+    const distribuicaoQuery = await poolAnalitico.query(`
+      SELECT 
+        tipo_vendedor,
+        COUNT(DISTINCT vendedor) as qtd_vendedores,
+        SUM(total_vendas) as total_vendas,
+        SUM(total_comissao) as total_comissao,
+        AVG(percentual_meta) as percentual_meta_medio
+      FROM comissoes_consolidadas
+      WHERE DATE_TRUNC('month', data_referencia) = DATE_TRUNC('month', $1::date)
+      GROUP BY tipo_vendedor
+    `, [dataRef]);
+    
+    res.json({
+      periodo: {
+        mes: mes,
+        ano: ano,
+        data_referencia: dataRef
+      },
+      resumo: resumoQuery.rows[0] || {},
+      distribuicao_vendedor: distribuicaoQuery.rows || [],
+      detalhes: comissoesQuery.rows || []
+    });
+  } catch (error) {
+    console.error('Erro ao buscar comissões:', error);
+    res.status(500).json({ error: 'Erro ao buscar comissões' });
+  }
+});
+
+/**
+ * GET /api/diretoria/comissoes/vendedor/:vendedor
+ * Retorna detalhes de comissões de um vendedor específico
+ */
+router.get('/comissoes/vendedor/:vendedor', async (req, res) => {
+  try {
+    const { vendedor } = req.params;
+    const mes = parseInt(req.query.mes) || 1;
+    const ano = parseInt(req.query.ano) || 2026;
+    
+    const ultimoDiaDoMes = new Date(ano, mes, 0).getDate();
+    const dataRef = `${ano}-${String(mes).padStart(2, '0')}-${String(ultimoDiaDoMes).padStart(2, '0')}`;
+    
+    const detalhesQuery = await poolAnalitico.query(`
+      SELECT *
+      FROM comissoes_consolidadas
+      WHERE vendedor = $1
+        AND DATE_TRUNC('month', data_referencia) = DATE_TRUNC('month', $2::date)
+      ORDER BY marca
+    `, [decodeURIComponent(vendedor), dataRef]);
+    
+    res.json({
+      vendedor: vendedor,
+      periodo: { mes, ano, data_referencia: dataRef },
+      detalhes: detalhesQuery.rows || []
+    });
+  } catch (error) {
+    console.error('Erro ao buscar comissões do vendedor:', error);
+    res.status(500).json({ error: 'Erro ao buscar comissões do vendedor' });
+  }
+});
