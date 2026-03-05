@@ -44,6 +44,19 @@ class ApiClient {
     }
 
     try {
+
+
+
+// --- INÍCIO DO LOG DE AUDITORIA ---
+console.group("AUDITORIA FETCH: " + endpoint);
+console.log("1. URL COMPLETA:", url);
+console.log("2. HEADERS:", JSON.stringify(config.headers, null, 2));
+console.log("3. PAYLOAD BRUTO:", config.body); 
+console.groupEnd();
+// --- FIM DO LOG DE AUDITORIA ---
+
+
+
       const response = await fetch(url, config);
 
       // Se receber 401 e tiver refresh token, tentar renovar
