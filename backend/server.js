@@ -20,6 +20,11 @@ import reportsRoutes from './routes/reports.js';
 import { authenticate } from './middleware/auth.js';
 import { testConnections } from './config/databases.js';
 
+
+
+// No topo com os outros imports
+import testRouter from './routes/test_debug.js';
+
 dotenv.config();
 
 const app = express();
@@ -45,9 +50,13 @@ app.use('/api/clientes', authenticate, clientesRoutes);
 app.use('/api/dashboard', authenticate, dashboardRoutes);
 app.use('/api/relatorios', authenticate, relatoriosRoutes);
 app.use('/api/diretoria', authenticate, diretoriaRoutes);
-app.use('/api/reports', authenticate, reportsRoutes);
+app.use('/api/reports', reportsRoutes);
 app.use('/api/produtos', authenticate, produtosRoutes);
 app.use("/api/operacional", operacionalRoutes);
+
+// No meio com os outros app.use
+app.use('/api/test', testRouter);
+
 
 // Rota de health check
 app.get('/health', (req, res) => {

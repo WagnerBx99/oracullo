@@ -15,9 +15,17 @@ const router = express.Router();
 // GET /api/produtos - Lista todos os produtos com custo e preço
 router.get('/', async (req, res) => {
   try {
+    // Buscar nomes das integrações (filiais)
+    const integracoesResult = await poolGestao.query('SELECT id, nome FROM integracoes');
+    const integracoesMap = integracoesResult.rows.reduce((acc, row) => {
+      acc[row.id] = row.nome;
+      return acc;
+    }, {});
+
     const query = `
       SELECT DISTINCT ON (p.codigo)
         p.id,
+        p.integracao_id,
         p.codigo,
         p.nome,
         p.descricao,
@@ -29,18 +37,18 @@ router.get('/', async (req, res) => {
         p.estoque,
         p.ativo,
         COALESCE(p.data_json->>'marca', '-') as marca,
-        COALESCE(p.data_json->>'filial', 'Matriz') as filial,
         'Consolidado' as fonte,
         'ERP' as tipo_integracao
       FROM produtos p
       ORDER BY p.codigo, p.id DESC
     `;
     
-    const result = await pool.query(query);
+    const result = await poolTransacional.query(query);
     
-    // Calcular margem se tiver custo e preço
+    // Calcular margem e mapear filial
     const produtos = result.rows.map(p => ({
       ...p,
+      filial: integracoesMap[p.integracao_id] || 'Matriz',
       margem: p.custo && p.preco_venda 
         ? parseFloat(((p.preco_venda - p.custo) / p.preco_venda * 100).toFixed(2))
         : 0
@@ -72,7 +80,7 @@ router.get('/stats', async (req, res) => {
       WHERE ativo = true
     `;
     
-    const result = await pool.query(query);
+    const result = await poolTransacional.query(query);
     const stats = result.rows[0];
     
     // Converter para números

@@ -16,6 +16,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Download, Search, Loader2 } from 'lucide-react';
 
+
+
+
+
 const MONTHS = [
     { value: '1', label: 'Janeiro' },
     { value: '2', label: 'Fevereiro' },
@@ -60,56 +64,69 @@ export default function SalesReportFilters({
         });
     };
 
+    const handleSelectAllStates = () => {
+        setFilters(prev => ({
+            ...prev,
+            state: statesList && statesList.length > 0 ? [...statesList] : []
+        }));
+    };
+
+    const handleClearStates = () => {
+        setFilters(prev => ({
+            ...prev,
+            state: []
+        }));
+    };
+
     return (
         <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 font-sans">
             <div className="flex flex-col md:flex-row gap-4 items-end">
 
-                {/* Filtro Estado */}
-                <div className="w-full md:w-32 space-y-1.5">
+                                {/* Filtro Unidade (Seleção Múltipla) */}
+                <div className="w-full md:w-64 space-y-1.5">
                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                        {multiState ? 'Estados' : 'Estado'}
+                        Unidades
                     </label>
-                    {multiState ? (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    className="w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 justify-start"
-                                >
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button
+                                variant="outline"
+                                className="w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 justify-between"
+                            >
+                                <span className="truncate">
                                     {Array.isArray(filters.state) && filters.state.length > 0
-                                        ? `${filters.state.length} sel.`
-                                        : 'Selecione'}
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-48 max-h-64 overflow-y-auto">
-                                {statesList?.map(uf => (
-                                    <DropdownMenuCheckboxItem
-                                        key={uf}
-                                        checked={Array.isArray(filters.state) && filters.state.includes(uf)}
-                                        onCheckedChange={() => handleMultiStateChange(uf)}
-                                    >
-                                        {uf.toUpperCase()}
-                                    </DropdownMenuCheckboxItem>
-                                ))}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    ) : (
-                        <Select
-                            value={typeof filters.state === 'string' ? filters.state : ''}
-                            onValueChange={(val) => handleChange('state', val)}
-                        >
-                            <SelectTrigger className="w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700">
-                                <SelectValue placeholder="UF" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {statesList?.map(uf => (
-                                    <SelectItem key={uf} value={uf}>{uf.toUpperCase()}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    )}
+                                        ? (filters.state.length === statesList.length ? 'Todas as Unidades' : `${filters.state.length} selecionadas`)
+                                        : 'Selecione Unidades'}
+                                </span>
+                                <Loader2 className={`w-4 h-4 animate-spin ${isLoading ? 'opacity-100' : 'opacity-0'}`} />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-64 max-h-80 overflow-y-auto">
+                            <DropdownMenuCheckboxItem
+                                checked={Array.isArray(filters.state) && statesList && filters.state.length === statesList.length}
+                                onCheckedChange={(checked) => {
+                                    if (checked) {
+                                        handleSelectAllStates();
+                                    } else {
+                                        handleClearStates();
+                                    }
+                                }}
+                                className="font-bold border-b border-slate-100 mb-1"
+                            >
+                                SELECIONAR TODAS
+                            </DropdownMenuCheckboxItem>
+                            {statesList?.map(unit => (
+                                <DropdownMenuCheckboxItem
+                                    key={unit}
+                                    checked={Array.isArray(filters.state) && filters.state.includes(unit)}
+                                    onCheckedChange={() => handleMultiStateChange(unit)}
+                                >
+                                    {unit}
+                                </DropdownMenuCheckboxItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
-
                 {/* Filtro Mês */}
                 <div className="w-full md:w-48 space-y-1.5">
                     <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -225,28 +242,6 @@ export default function SalesReportFilters({
                         </SelectContent>
                     </Select>
                 </div>
-
-                {/* Filtro Filial */}
-                <div className={`w-full md:w-64 space-y-1.5 ${activeTab === 'consolidado' ? 'hidden' : ''}`}>
-                    <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Filial</label>
-                    <Select
-                        value={filters.branch || "Todas"}
-                        onValueChange={(val) => handleChange('branch', val === "Todas" ? "" : val)}
-                    >
-                        <SelectTrigger className="w-full bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700">
-                            <SelectValue placeholder="Todas as Filiais" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Todas">Todas as Filiais</SelectItem>
-                            {options.branches?.map(b => (
-                                <SelectItem key={b} value={b}>{b}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-
-
-                <div className="flex-1" />
 
                 {/* Botões de Ação */}
                 <div className="flex gap-2 w-full md:w-auto">

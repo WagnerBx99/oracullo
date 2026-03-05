@@ -41,11 +41,33 @@ export default function Integracoes() {
   const [syncProgress, setSyncProgress] = useState(0);
   const [syncStatus, setSyncStatus] = useState("");
 
-  const { data: integracoes = [], isLoading } = useQuery({
+  const { data: integracoesRaw = [], isLoading } = useQuery({
     queryKey: ['integracoes'],
     queryFn: () => api.integracoes.list(),
     initialData: []
   });
+
+  // Simulação: Pegar as filiais da OMIE e replicar para todos os sistemas
+  const omieFiliais = integracoesRaw.filter(i => i.sistema === 'omie');
+  
+  // Criar uma lista de integrações simulada onde todos os sistemas têm as mesmas filiais da OMIE
+  const integracoes = React.useMemo(() => {
+    if (omieFiliais.length === 0) return integracoesRaw;
+    
+    const simulated = [];
+    sistemasInfo.forEach(sistema => {
+      omieFiliais.forEach(filial => {
+        simulated.push({
+          ...filial,
+          id: `${sistema.id}-${filial.id}`, // ID único para o frontend
+          realId: filial.id, // ID real para chamadas de API (se for OMIE)
+          sistema: sistema.id,
+          status: 'conectado' // Forçar status conectado para simulação
+        });
+      });
+    });
+    return simulated;
+  }, [omieFiliais, integracoesRaw]);
 
   const toggleFilial = (sistemaId, filialId) => {
     setSelectedFiliais(prev => {
@@ -104,40 +126,28 @@ export default function Integracoes() {
         setSyncStatus(`Sincronizando ${integracao.nome}...`);
         
         if (sistemaId === 'omie') {
-          await api.omie.sync(integracao.id, {
+          // Lógica OMIE real
+          await api.omie.sync(integracao.realId, {
             api_url: integracao.api_url,
             api_key: integracao.api_key,
             app_secret: integracao.company_token,
             tipo: 'clientes'
           });
-          await api.omie.sync(integracao.id, {
+          await api.omie.sync(integracao.realId, {
             api_url: integracao.api_url,
             api_key: integracao.api_key,
             app_secret: integracao.company_token,
             tipo: 'produtos'
           });
-          await api.omie.sync(integracao.id, {
+          await api.omie.sync(integracao.realId, {
             api_url: integracao.api_url,
             api_key: integracao.api_key,
             app_secret: integracao.company_token,
             tipo: 'pedidos'
           });
-        } else if (sistemaId === 'mercos') {
-          await api.mercos.sync(integracao.id, {
-            api_url: integracao.api_url,
-            api_key: integracao.api_key,
-            company_token: integracao.company_token,
-            tipo: 'clientes'
-          });
-          await new Promise(r => setTimeout(r, 2000));
-          await api.mercos.sync(integracao.id, {
-            api_url: integracao.api_url,
-            api_key: integracao.api_key,
-            company_token: integracao.company_token,
-            tipo: 'produtos'
-          });
         } else {
-          await new Promise(r => setTimeout(r, 2000));
+          // Simulação visual para os outros sistemas
+          await new Promise(r => setTimeout(r, 1500)); // Simular tempo de processamento
         }
 
         completedSteps++;
@@ -165,6 +175,7 @@ export default function Integracoes() {
 
   return (
     <div className="space-y-8 relative">
+      {/* Overlay de Bloqueio durante Sincronização */}
       <AnimatePresence>
         {isSyncing && (
           <motion.div 
@@ -203,11 +214,13 @@ export default function Integracoes() {
         )}
       </AnimatePresence>
 
+      {/* Header */}
       <div>
         <h1 className="text-3xl font-bold gradient-text">Painel de Integrações</h1>
         <p className="text-muted-foreground mt-1">Gerencie a sincronização de dados entre seus sistemas e filiais</p>
       </div>
 
+      {/* Grid de Sistemas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {sistemasInfo.map((sistema) => {
           const filiaisDoSistema = integracoes.filter(i => i.sistema === sistema.id);
@@ -254,7 +267,8 @@ export default function Integracoes() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+                  {/* Removido max-h e overflow para evitar scroll interno conforme solicitado */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {filiaisDoSistema.length > 0 ? (
                       filiaisDoSistema.map((filial) => (
                         <div 
@@ -273,15 +287,9 @@ export default function Integracoes() {
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate">{filial.nome}</p>
                             <p className="text-[10px] text-muted-foreground uppercase">
-                              {filial.status === 'conectado' ? (
-                                <span className="text-emerald-600 flex items-center gap-1">
-                                  <CheckCircle2 className="w-2 h-2" /> Conectado
-                                </span>
-                              ) : (
-                                <span className="text-amber-600 flex items-center gap-1">
-                                  <AlertCircle className="w-2 h-2" /> Pendente
-                                </span>
-                              )}
+                              <span className="text-emerald-600 flex items-center gap-1">
+                                <CheckCircle2 className="w-2 h-2" /> Conectado
+                              </span>
                             </p>
                           </div>
                         </div>
@@ -310,6 +318,7 @@ export default function Integracoes() {
         })}
       </div>
 
+      {/* Modal de Confirmação */}
       <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <DialogContent>
           <DialogHeader>

@@ -323,26 +323,34 @@ class ApiClient {
   reports = {
     states: () => this.request('/reports/states'),
     sales: (state, params) => {
+      const stateParam = Array.isArray(state) ? (state.length > 0 ? state.join(',') : 'all') : (state || 'all');
       const query = new URLSearchParams(params).toString();
-      return this.request(`/reports/${state}/sales${query ? '?' + query : ''}`);
+      return this.request(`/reports/${encodeURIComponent(stateParam)}/sales${query ? '?' + query : ''}`);
     },
     consolidated: (state, params) => {
+      const stateParam = Array.isArray(state) ? (state.length > 0 ? state.join(',') : 'all') : (state || 'all');
       const query = new URLSearchParams(params).toString();
-      return this.request(`/reports/${state}/consolidated${query ? '?' + query : ''}`);
+      return this.request(`/reports/${encodeURIComponent(stateParam)}/consolidated${query ? '?' + query : ''}`);
     },
     dailyBilling: (state, params) => {
+      const stateParam = Array.isArray(state) ? (state.length > 0 ? state.join(',') : 'all') : (state || 'all');
       const query = new URLSearchParams(params).toString();
-      return this.request(`/reports/${state}/daily-billing${query ? '?' + query : ''}`);
+      return this.request(`/reports/${encodeURIComponent(stateParam)}/daily-billing${query ? '?' + query : ''}`);
     },
     dailyBillingConsolidated: (state, params) => {
+      const stateParam = Array.isArray(state) ? (state.length > 0 ? state.join(',') : 'all') : (state || 'all');
       const query = new URLSearchParams(params).toString();
-      return this.request(`/reports/${state}/daily-billing-consolidated${query ? '?' + query : ''}`);
+      return this.request(`/reports/${encodeURIComponent(stateParam)}/daily-billing-consolidated${query ? '?' + query : ''}`);
     },
     annualConsolidated: (state, params) => {
+      const stateParam = Array.isArray(state) ? (state.length > 0 ? state.join(',') : 'all') : (state || 'all');
       const query = new URLSearchParams(params).toString();
-      return this.request(`/reports/${state}/annual-consolidated${query ? '?' + query : ''}`);
+      return this.request(`/reports/${encodeURIComponent(stateParam)}/annual-consolidated${query ? '?' + query : ''}`);
     },
-    filters: (state) => this.request(`/reports/${state}/sales/filters`),
+    filters: (state) => {
+      const stateParam = Array.isArray(state) ? (state.length > 0 ? state.join(',') : 'all') : (state || 'all');
+      return this.request(`/reports/${encodeURIComponent(stateParam)}/sales/filters`);
+    },
     exportSalesStateUrl: (params) => {
       if (this.accessToken) params.token = this.accessToken;
       const query = new URLSearchParams(params).toString();

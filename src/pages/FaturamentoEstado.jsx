@@ -12,7 +12,7 @@ export default function FaturamentoEstado() {
 
     // Estado global de filtros que cruza as abas
     const [filters, setFilters] = useState({
-        state: '', // inicialmente vazio até carregar
+        state: [], // seleção múltipla de unidades
         month: new Date().getMonth() + 1,
         year: new Date().getFullYear(),
         salesperson: '',
@@ -37,11 +37,11 @@ export default function FaturamentoEstado() {
                 const states = await api.reports.states();
                 setStatesList(states);
                 if (states.length > 0) {
-                    setFilters(prev => ({ ...prev, state: states[0] })); // autoseleciona o primeiro
+                    setFilters(prev => ({ ...prev, state: states })); // autoseleciona todas por padrão
                 }
             } catch (err) {
                 toast({
-                    title: "Erro ao buscar estados",
+                    title: "Erro ao buscar unidades",
                     description: err.message || "Tente novamente mais tarde.",
                     variant: "destructive",
                 });
@@ -165,10 +165,10 @@ export default function FaturamentoEstado() {
         <div className="flex flex-col space-y-4">
             <div className="flex flex-col gap-1 shrink-0">
                 <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                    Faturamento por Estado
+                    Faturamento por Unidade
                 </h1>
                 <p className="text-slate-500 dark:text-slate-400">
-                    Transações gerenciais, custos e lucratividade filtrados pelas regras do negócio.
+                    Transações gerenciais, custos e lucratividade filtrados por unidade e regras de negócio.
                 </p>
             </div>
 

@@ -24,14 +24,10 @@ export default function FechamentoComissoes() {
   });
 
   const formatCurrency = (value) => {
-    if (!value) return 'R$ 0';
-    if (value >= 1000000) {
-      return `R$ ${Number((value / 1000000) || 0).toFixed(1)}M`;
-    }
-    if (value >= 1000) {
-      return `R$ ${Number((value / 1000) || 0).toFixed(0)}K`;
-    }
-    return `R$ ${Number(value || 0).toFixed(2)}`;
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value || 0);
   };
 
   const formatPercent = (value) => {
@@ -43,27 +39,27 @@ export default function FechamentoComissoes() {
   const resumo = comissoesData.resumo || {};
   const cards = [
     {
-      label: 'Total de Vendedores',
-      value: resumo.total_vendedores || 0,
-      icon: Users,
-      color: 'blue'
-    },
-    {
       label: 'Total de Vendas',
       value: formatCurrency(resumo.total_vendas_geral || 0),
       icon: DollarSign,
+      color: 'blue'
+    },
+    {
+      label: 'Comissões',
+      value: formatCurrency(resumo.total_comissoes_geral || 0),
+      icon: TrendingUp,
       color: 'emerald'
     },
     {
-      label: 'Total de Comissões',
-      value: formatCurrency(resumo.total_comissoes_geral || 0),
-      icon: TrendingUp,
+      label: 'Premiações',
+      value: formatCurrency(resumo.total_premios || 0),
+      icon: Target,
       color: 'orange'
     },
     {
-      label: 'Meta Atingida',
-      value: formatPercent(resumo.percentual_meta_medio || 0),
-      icon: Target,
+      label: 'Ajuda de Custo',
+      value: formatCurrency(resumo.total_ajuda_custo || 0),
+      icon: Users,
       color: 'purple'
     }
   ];
@@ -78,7 +74,7 @@ export default function FechamentoComissoes() {
 
   const detalhesData = (comissoesData.detalhes || [])
     .filter(item => filtroTipo === 'TODOS' || item.tipo_vendedor === filtroTipo)
-    .slice(0, 20);
+    .slice(0, 100);
 
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
@@ -250,26 +246,35 @@ export default function FechamentoComissoes() {
         <h3 className="text-lg font-semibold text-foreground mb-4">Detalhes por Vendedor</h3>
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border">
+            <tr className="border-b border-border bg-muted/50">
               <th className="text-left py-3 px-4 font-semibold text-foreground">Vendedor</th>
               <th className="text-left py-3 px-4 font-semibold text-foreground">Marca</th>
               <th className="text-left py-3 px-4 font-semibold text-foreground">Filial</th>
-              <th className="text-right py-3 px-4 font-semibold text-foreground">Vendas</th>
-              <th className="text-right py-3 px-4 font-semibold text-foreground">Comissão</th>
-              <th className="text-right py-3 px-4 font-semibold text-foreground">Meta %</th>
+              <th className="text-right py-3 px-4 font-semibold text-foreground">Vendas Total</th>
+              <th className="text-right py-3 px-4 font-semibold text-foreground">% Comis.</th>
+              <th className="text-right py-3 px-4 font-semibold text-foreground">Vlr. Comissão</th>
+              <th className="text-right py-3 px-4 font-semibold text-foreground">Prêmio</th>
+              <th className="text-right py-3 px-4 font-semibold text-foreground">Ajuda Custo</th>
+              <th className="text-right py-3 px-4 font-semibold text-foreground">Total Líquido</th>
             </tr>
           </thead>
           <tbody>
-            {detalhesData.map((item, index) => (
-              <tr key={index} className="border-b border-border hover:bg-background/50 transition-colors">
-                <td className="py-3 px-4 text-foreground">{item.vendedor}</td>
-                <td className="py-3 px-4 text-foreground">{item.marca}</td>
-                <td className="py-3 px-4 text-foreground">{item.filial}</td>
-                <td className="py-3 px-4 text-right text-foreground">{formatCurrency(item.total_vendas)}</td>
-                <td className="py-3 px-4 text-right text-emerald-600 font-semibold">{formatCurrency(item.total_comissao)}</td>
-                <td className="py-3 px-4 text-right text-foreground">{formatPercent(item.percentual_meta)}</td>
-              </tr>
-            ))}
+            {detalhesData.map((item, index) => {
+              const totalLiquido = Number(item.total_comissao || 0) + Number(item.premio || 0) + Number(item.ajuda_custo || 0) - Number(item.desconto || 0);
+              return (
+                <tr key={index} className="border-b border-border hover:bg-background/50 transition-colors">
+                  <td className="py-3 px-4 text-foreground font-medium">{item.vendedor}</td>
+                  <td className="py-3 px-4 text-foreground text-xs">{item.marca}</td>
+                  <td className="py-3 px-4 text-foreground text-xs">{item.filial}</td>
+                  <td className="py-3 px-4 text-right text-foreground">{formatCurrency(item.total_vendas)}</td>
+                  <td className="py-3 px-4 text-right text-foreground">{formatPercent(item.comissao_percentual)}</td>
+                  <td className="py-3 px-4 text-right text-emerald-600 font-semibold">{formatCurrency(item.total_comissao)}</td>
+                  <td className="py-3 px-4 text-right text-blue-600">{formatCurrency(item.premio)}</td>
+                  <td className="py-3 px-4 text-right text-foreground">{formatCurrency(item.ajuda_custo)}</td>
+                  <td className="py-3 px-4 text-right text-foreground font-bold bg-muted/30">{formatCurrency(totalLiquido)}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </motion.div>

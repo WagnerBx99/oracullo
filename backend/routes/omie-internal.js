@@ -177,4 +177,25 @@ router.post('/sync/estoque', async (req, res) => {
   }
 });
 
+
+
+
+// Webhook de teste OMIE
+router.post('/webhook', (req, res) => {
+  const body = req.body;
+
+  // Log colorido no console, truncando se for muito grande
+  const maxLength = 1000;
+  const displayed = JSON.stringify(body, null, 2).slice(0, maxLength);
+  console.log('========== WEBHOOK OMIE ==========');
+  console.log(displayed + (displayed.length < JSON.stringify(body, null, 2).length ? '\n...[truncated]' : ''));
+  console.log('==================================');
+
+  res.status(200).send('OK');
+});
+
+
+
+
+
 export default router;
