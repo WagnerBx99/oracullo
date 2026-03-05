@@ -1,14 +1,5 @@
 import express from 'express';
-import pkg from 'pg';
-const { Pool } = pkg;
-
-const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: 'oracullo_transacional',
-  user: process.env.DB_USER || 'oracullo_user',
-  password: process.env.DB_PASSWORD || 'oracullo123'
-});
+import { poolGestao, poolTransacional } from '../config/databases.js';
 
 const router = express.Router();
 

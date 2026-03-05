@@ -89,7 +89,7 @@ router.get('/sistema/permissoes', async (req, res) => {
         chave,
         descricao
       FROM permissoes
-      ORDER BY modulo, acao
+      ORDER BY modulo, chave
     `);
 
     res.json(result.rows);
